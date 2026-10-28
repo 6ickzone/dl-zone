@@ -1,0 +1,6 @@
+{
+  "name": "Downloader zone",
+  "description": "Download Video, Musik & File Cukup Tempel Link dari 20+ platform populer tanpa ribet.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
