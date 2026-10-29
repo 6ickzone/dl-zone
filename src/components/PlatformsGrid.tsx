@@ -2,22 +2,23 @@ import React, { useState } from 'react';
 import { SUPPORTED_PLATFORMS } from '../data/platforms';
 import { PlatformInfo } from '../types';
 import { RenderPlatformIcon } from './PlatformIcons';
-import { CheckCircle2, ArrowRight, X, ExternalLink, Sparkles } from 'lucide-react';
+import { CheckCircle2, ArrowRight, X } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 interface PlatformsGridProps {
   onSelectPlatform: (sampleUrl: string) => void;
 }
 
 export const PlatformsGrid: React.FC<PlatformsGridProps> = ({ onSelectPlatform }) => {
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'short' | 'video' | 'audio' | 'cloud'>('all');
+  const { t, language } = useLanguage();
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'short' | 'video' | 'audio'>('all');
   const [activePlatformModal, setActivePlatformModal] = useState<PlatformInfo | null>(null);
 
   const categories = [
-    { id: 'all', label: 'Semua (20)' },
-    { id: 'short', label: 'Shorts & Reels' },
-    { id: 'video', label: 'Video HD & 4K' },
-    { id: 'audio', label: 'Musik & Audio' },
-    { id: 'cloud', label: 'Cloud & File' },
+    { id: 'all', label: t.platforms.catAll },
+    { id: 'short', label: t.platforms.catShort },
+    { id: 'video', label: t.platforms.catVideo },
+    { id: 'audio', label: t.platforms.catAudio },
   ];
 
   const filteredPlatforms = selectedCategory === 'all'
@@ -27,13 +28,13 @@ export const PlatformsGrid: React.FC<PlatformsGridProps> = ({ onSelectPlatform }
   return (
     <section id="platform" className="pt-10 pb-16 px-4 sm:px-6">
       <div className="max-w-4xl mx-auto text-center">
-        {/* Screenshot Section Heading */}
+        {/* Section Heading */}
         <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-2">
-          20 Platform yang Didukung
+          {t.platforms.heading}
         </h2>
-        {/* Screenshot Section Subtitle */}
+        {/* Section Subtitle */}
         <p className="text-xs sm:text-sm text-slate-400 max-w-xl mx-auto mb-7">
-          Semua dalam satu tempat — tempel link, pilih kualitas, lalu download.
+          {t.platforms.subtitle}
         </p>
 
         {/* Filter Tabs */}
@@ -42,7 +43,7 @@ export const PlatformsGrid: React.FC<PlatformsGridProps> = ({ onSelectPlatform }
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id as unknown as typeof selectedCategory)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
                 selectedCategory === cat.id
                   ? 'bg-emerald-500 text-slate-950 shadow-sm'
                   : 'bg-slate-800/70 text-slate-400 hover:text-slate-200 border border-slate-700/60'
@@ -53,13 +54,13 @@ export const PlatformsGrid: React.FC<PlatformsGridProps> = ({ onSelectPlatform }
           ))}
         </div>
 
-        {/* Grid matching the screenshot layout: app tiles */}
-        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-10 gap-3 sm:gap-4 mb-6">
+        {/* Grid: 17 platform tiles */}
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-9 gap-3 sm:gap-4 mb-6">
           {filteredPlatforms.map((p) => (
             <button
               key={p.id}
               onClick={() => setActivePlatformModal(p)}
-              className="group flex flex-col items-center justify-center p-2 rounded-2xl bg-[#14212d] hover:bg-[#1b2b3a] border border-slate-700/70 hover:border-emerald-500/60 transition-all transform hover:-translate-y-1 shadow-md cursor-pointer"
+              className="group flex flex-col items-center justify-center p-2.5 rounded-2xl bg-[#14212d] hover:bg-[#1b2b3a] border border-slate-700/70 hover:border-emerald-500/60 transition-all transform hover:-translate-y-1 shadow-md cursor-pointer"
               title={`${p.name}: ${p.description}`}
             >
               <div
@@ -76,7 +77,9 @@ export const PlatformsGrid: React.FC<PlatformsGridProps> = ({ onSelectPlatform }
         </div>
 
         <p className="text-xs text-slate-500">
-          Klik salah satu platform untuk melihat fitur unduhan & coba tautan sampel.
+          {language === 'en'
+            ? 'Click any platform to view supported formats and try sample links.'
+            : 'Klik salah satu platform untuk melihat fitur unduhan & coba tautan sampel.'}
         </p>
       </div>
 
@@ -86,7 +89,7 @@ export const PlatformsGrid: React.FC<PlatformsGridProps> = ({ onSelectPlatform }
           <div className="bg-[#14212d] border border-slate-700 rounded-2xl max-w-md w-full p-6 text-left shadow-2xl relative animate-in zoom-in-95 duration-150">
             <button
               onClick={() => setActivePlatformModal(null)}
-              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700"
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -110,11 +113,11 @@ export const PlatformsGrid: React.FC<PlatformsGridProps> = ({ onSelectPlatform }
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
                   <span>{activePlatformModal.name}</span>
                   <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 uppercase">
-                    Aktif
+                    Active
                   </span>
                 </h3>
                 <p className="text-xs text-slate-400">
-                  Didukung penuh oleh Downloader zone
+                  {language === 'en' ? 'Fully supported by Downloader Zone' : 'Didukung penuh oleh Downloader Zone'}
                 </p>
               </div>
             </div>
@@ -124,8 +127,8 @@ export const PlatformsGrid: React.FC<PlatformsGridProps> = ({ onSelectPlatform }
             </p>
 
             <div className="bg-slate-900/60 rounded-xl p-3 border border-slate-800 mb-5">
-              <span className="text-xs font-semibold text-slate-400 block mb-2">
-                FORMAT YANG DAPAT DIUNDUH:
+              <span className="text-xs font-semibold text-slate-400 block mb-2 uppercase">
+                {t.platforms.supportedFormats}:
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {activePlatformModal.supportedFormats.map((fmt, idx) => (
@@ -148,7 +151,7 @@ export const PlatformsGrid: React.FC<PlatformsGridProps> = ({ onSelectPlatform }
                 }}
                 className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-emerald-500/20 transition-all cursor-pointer"
               >
-                <span>Coba Download Link {activePlatformModal.name}</span>
+                <span>{language === 'en' ? `Try ${activePlatformModal.name} Link` : `Coba Download Link ${activePlatformModal.name}`}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>

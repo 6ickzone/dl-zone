@@ -10,16 +10,12 @@ import {
   Pause,
   Maximize2,
   X,
-  Volume2,
-  VolumeX,
   FileDown,
-  Sparkles,
-  ExternalLink,
-  RotateCcw
 } from 'lucide-react';
 import { MediaMetadata, DownloadQuality } from '../types';
 import { RenderPlatformIcon } from './PlatformIcons';
 import { triggerFileDownload } from '../utils/downloader';
+import { useLanguage } from '../context/LanguageContext';
 
 interface MediaResultCardProps {
   media: MediaMetadata;
@@ -30,6 +26,7 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
   media,
   onDownloadSuccess,
 }) => {
+  const { t, language } = useLanguage();
   const [activeMediaTab, setActiveMediaTab] = useState<'video' | 'audio'>('video');
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [isModalPlayerOpen, setIsModalPlayerOpen] = useState<boolean>(false);
@@ -139,7 +136,7 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
       { progress: 28, speed: '14.2 MB/s', delay: 200 },
       { progress: 68, speed: '21.4 MB/s', delay: 350 },
       { progress: 94, speed: '18.1 MB/s', delay: 500 },
-      { progress: 100, speed: 'Menyimpan file...', delay: 650 },
+      { progress: 100, speed: language === 'en' ? 'Finalizing file...' : 'Menyimpan file...', delay: 650 },
     ];
 
     for (const step of steps) {
@@ -200,7 +197,7 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
               {media.platformName}
             </span>
             <span className="text-xs text-emerald-400 font-semibold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/20">
-              ● Siap Diputar & Diunduh
+              ● {language === 'en' ? 'Ready to Stream & Download' : 'Siap Diputar & Diunduh'}
             </span>
           </div>
 
@@ -208,10 +205,10 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
             <button
               onClick={() => setIsModalPlayerOpen(true)}
               className="flex items-center gap-1.5 text-xs text-emerald-300 hover:text-white px-2.5 py-1 rounded-md bg-emerald-950/60 hover:bg-emerald-900/80 transition-colors border border-emerald-500/30 cursor-pointer"
-              title="Buka Pemutar Layar Penuh"
+              title={language === 'en' ? 'Open Fullscreen Player' : 'Buka Pemutar Layar Penuh'}
             >
               <Maximize2 className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Layar Penuh</span>
+              <span>{language === 'en' ? 'Fullscreen' : 'Layar Penuh'}</span>
             </button>
 
             <button
@@ -219,16 +216,16 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
               className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-white px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 transition-colors border border-slate-700 cursor-pointer"
             >
               {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5" />}
-              <span>{copiedLink ? 'Tersalin!' : 'Salin Link'}</span>
+              <span>{copiedLink ? t.result.copied : t.result.shareLink}</span>
             </button>
 
             <button
               onClick={() => setShowQrModal(true)}
               className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-white px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 transition-colors border border-slate-700 cursor-pointer"
-              title="Unduh ke Ponsel dengan QR Code"
+              title={language === 'en' ? 'Scan QR on phone' : 'Unduh ke Ponsel dengan QR Code'}
             >
               <QrCode className="w-3.5 h-3.5 text-slate-300" />
-              <span>QR HP</span>
+              <span>{language === 'en' ? 'Mobile QR' : 'QR HP'}</span>
             </button>
           </div>
         </div>
@@ -267,9 +264,9 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
                       <p className="text-xs font-semibold text-white mb-2">{media.title}</p>
                       <button
                         onClick={toggleAudioPreview}
-                        className="px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 text-xs font-bold"
+                        className="px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 text-xs font-bold cursor-pointer"
                       >
-                        {isAudioPlaying ? 'Jeda Audio' : 'Putar Audio'}
+                        {isAudioPlaying ? (language === 'en' ? 'Pause Audio' : 'Jeda Audio') : (language === 'en' ? 'Play Audio' : 'Putar Audio')}
                       </button>
                     </div>
                   </div>
@@ -279,7 +276,7 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
                 <button
                   onClick={() => setIsPlaying(false)}
                   className="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 hover:bg-black text-white hover:text-emerald-400 z-20 backdrop-blur-xs transition-colors cursor-pointer"
-                  title="Tutup Pemutar Video"
+                  title="Close player"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -307,7 +304,7 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
                 <button
                   onClick={toggleInlinePlay}
                   className="absolute inset-0 m-auto w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-slate-950 flex items-center justify-center transition-all transform hover:scale-110 active:scale-95 shadow-xl shadow-emerald-500/40 cursor-pointer z-10 group/btn"
-                  title="Putar Preview Langsung"
+                  title={language === 'en' ? 'Play direct stream' : 'Putar Preview Langsung'}
                 >
                   <Play className="w-6 h-6 fill-current ml-0.5" />
                 </button>
@@ -315,7 +312,7 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
                 <div className="absolute bottom-2.5 left-2.5 z-10 pointer-events-none">
                   <span className="text-[11px] font-bold text-emerald-300 flex items-center gap-1 drop-shadow-md">
                     <Play className="w-3 h-3 fill-current" />
-                    <span>Klik untuk Putar</span>
+                    <span>{language === 'en' ? 'Click to Play' : 'Klik untuk Putar'}</span>
                   </span>
                 </div>
               </>
@@ -330,7 +327,7 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
                   {media.platformName}
                 </span>
                 <span className="text-slate-600">·</span>
-                <span className="text-[11px] text-slate-400">{media.date || 'Tersedia'}</span>
+                <span className="text-[11px] text-slate-400">{media.date || (language === 'en' ? 'Available' : 'Tersedia')}</span>
               </div>
 
               <h2 className="text-base sm:text-lg font-bold text-white line-clamp-2 leading-snug mb-1.5">
@@ -351,7 +348,7 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
                 <div className="flex items-center justify-between text-xs mb-2">
                   <span className="font-semibold text-slate-300 flex items-center gap-1.5">
                     <Music className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Pratinjau Audio:</span>
+                    <span>{language === 'en' ? 'Audio Stream Preview:' : 'Pratinjau Audio:'}</span>
                   </span>
                   <span className="font-mono text-emerald-400 text-[11px]">
                     {audioCurrentTime} / {media.duration || '0:30'}
@@ -362,7 +359,7 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
                   <button
                     onClick={toggleAudioPreview}
                     className="w-8 h-8 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center shrink-0 transition-all cursor-pointer shadow-sm"
-                    title={isAudioPlaying ? 'Jeda' : 'Putar Audio'}
+                    title={isAudioPlaying ? 'Pause' : 'Play Audio'}
                   >
                     {isAudioPlaying ? (
                       <Pause className="w-4 h-4 fill-current" />
@@ -399,7 +396,7 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
                 <div className="flex items-center justify-between text-xs mb-1.5">
                   <span className="font-semibold text-emerald-400 flex items-center gap-1.5">
                     <FileDown className="w-3.5 h-3.5 animate-bounce" />
-                    Mengunduh file ke perangkat...
+                    {language === 'en' ? 'Downloading file to device...' : 'Mengunduh file ke perangkat...'}
                   </span>
                   <span className="font-mono text-slate-300">{downloadProgress}%</span>
                 </div>
@@ -410,8 +407,8 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
                   />
                 </div>
                 <div className="flex justify-between text-[11px] text-slate-400 font-mono">
-                  <span>Kecepatan: {downloadSpeed}</span>
-                  <span>Server CDN Cepat</span>
+                  <span>{language === 'en' ? 'Speed:' : 'Kecepatan:'} {downloadSpeed}</span>
+                  <span>{language === 'en' ? 'Fast CDN Server' : 'Server CDN Cepat'}</span>
                 </div>
               </div>
             )}
@@ -428,7 +425,7 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
                   }`}
                 >
                   <Video className="w-3.5 h-3.5" />
-                  <span>Video MP4 ({media.qualities.length})</span>
+                  <span>{language === 'en' ? 'Video MP4' : 'Video MP4'} ({media.qualities.length})</span>
                 </button>
               )}
 
@@ -442,7 +439,7 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
                   }`}
                 >
                   <Music className="w-3.5 h-3.5" />
-                  <span>Audio MP3 ({media.audioQualities.length})</span>
+                  <span>{language === 'en' ? 'Audio MP3' : 'Audio MP3'} ({media.audioQualities.length})</span>
                 </button>
               )}
             </div>
@@ -452,8 +449,8 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
         {/* Quality Options Table */}
         <div className="border-t border-slate-800/80 px-5 sm:px-6 py-4 bg-slate-950/40">
           <div className="text-xs font-semibold text-slate-400 mb-3 flex items-center justify-between">
-            <span>PILIH KUALITAS UNDUHAN:</span>
-            <span className="text-[11px] text-slate-500">Bebas kuota · Kecepatan tinggi</span>
+            <span className="uppercase">{language === 'en' ? 'Select Download Quality:' : 'PILIH KUALITAS UNDUHAN:'}</span>
+            <span className="text-[11px] text-slate-500">{language === 'en' ? 'Zero quota · High speed' : 'Bebas kuota · Kecepatan tinggi'}</span>
           </div>
 
           <div className="space-y-2">
@@ -501,17 +498,17 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
                   {completedId === item.id ? (
                     <>
                       <Check className="w-3.5 h-3.5 stroke-[3]" />
-                      <span>Tersimpan!</span>
+                      <span>{language === 'en' ? 'Saved!' : 'Tersimpan!'}</span>
                     </>
                   ) : downloadingId === item.id ? (
                     <>
                       <div className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                      <span>Mengunduh...</span>
+                      <span>{language === 'en' ? 'Downloading...' : 'Mengunduh...'}</span>
                     </>
                   ) : (
                     <>
                       <Download className="w-3.5 h-3.5 stroke-[2.5]" />
-                      <span>Unduh Sekarang</span>
+                      <span>{t.result.downloadNow}</span>
                     </>
                   )}
                 </button>
@@ -571,7 +568,7 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
                     onClick={toggleAudioPreview}
                     className="px-4 py-2 rounded-xl bg-emerald-500 text-slate-950 text-xs font-bold shadow-md cursor-pointer"
                   >
-                    {isAudioPlaying ? 'Jeda Audio' : 'Putar Audio'}
+                    {isAudioPlaying ? (language === 'en' ? 'Pause Audio' : 'Jeda Audio') : (language === 'en' ? 'Play Audio' : 'Putar Audio')}
                   </button>
                 </div>
               )}
@@ -581,9 +578,9 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
               <span>Platform: <strong className="text-emerald-400 capitalize">{media.platformName}</strong></span>
               <button
                 onClick={() => setIsModalPlayerOpen(false)}
-                className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700"
+                className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 cursor-pointer"
               >
-                Tutup
+                {t.result.close}
               </button>
             </div>
           </div>
@@ -595,10 +592,12 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-[#14212d] border border-slate-700 rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl animate-in zoom-in-95 duration-150">
             <h3 className="text-base font-bold text-white mb-2">
-              Unduh di Ponsel / HP
+              {language === 'en' ? 'Download on Mobile Device' : 'Unduh di Ponsel / HP'}
             </h3>
             <p className="text-xs text-slate-400 mb-5 leading-relaxed">
-              Buka kamera ponsel Anda lalu arahkan ke QR Code ini untuk mengunduh media langsung ke galeri HP.
+              {language === 'en'
+                ? 'Scan this QR code with your phone camera to download directly to your mobile gallery or files.'
+                : 'Buka kamera ponsel Anda lalu arahkan ke QR Code ini untuk mengunduh media langsung ke galeri HP.'}
             </p>
 
             <div className="p-4 bg-white rounded-xl inline-block mb-4 shadow-inner">
@@ -638,7 +637,7 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
               onClick={() => setShowQrModal(false)}
               className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors cursor-pointer"
             >
-              Tutup
+              {t.result.close}
             </button>
           </div>
         </div>

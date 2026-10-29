@@ -94,21 +94,6 @@ export const SAMPLE_PRESETS: Record<string, Partial<MediaMetadata>> = {
       { id: 'sp-192', label: 'MP3 Standar 192kbps', bitrate: '192 kbps', format: 'mp3', fileSize: '5.1 MB' },
       { id: 'sp-art', label: 'Cover Art Album High Resolution', resolution: '1400x1400', format: 'jpg', fileSize: '1.2 MB' }
     ]
-  },
-  gdrive: {
-    platform: 'gdrive',
-    platformName: 'Google Drive Bypass',
-    title: 'Master_Design_Assets_2026_FullPackage.zip',
-    author: 'Shared Google Drive File',
-    duration: 'Ukuran: 420 MB',
-    likes: 'Direct',
-    views: 'Tanpa Kuota Limit',
-    date: 'Update terbaru',
-    thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80',
-    qualities: [
-      { id: 'gd-direct', label: 'Direct High-Speed Download (Bypass Limit Kuota)', resolution: 'Full Speed', format: 'zip', fileSize: '420 MB', isPopular: true, badge: 'Bypass Kuota' }
-    ],
-    audioQualities: []
   }
 };
 

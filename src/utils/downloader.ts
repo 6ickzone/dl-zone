@@ -1,5 +1,4 @@
 import { SUPPORTED_PLATFORMS } from '../data/platforms';
-import { SAMPLE_PRESETS } from '../data/sampleMedia';
 import { MediaMetadata, PlatformId, PlatformInfo, DownloadQuality } from '../types';
 
 export function detectPlatformFromUrl(url: string): PlatformInfo | null {
@@ -161,53 +160,8 @@ export async function fetchLinkMetadata(rawUrl: string): Promise<MediaMetadata> 
     }
   }
 
-  // 4. Intelligent fallback based on URL slug
-  try {
-    const parsedUrl = new URL(url);
-    const pathSegments = parsedUrl.pathname.split('/').filter(Boolean);
-    const lastSegment = pathSegments[pathSegments.length - 1] || parsedUrl.hostname;
-    const cleanTitle = decodeURIComponent(lastSegment).replace(/[-_+.]/g, ' ');
-
-    return {
-      id: `media-${Date.now()}`,
-      url,
-      platform: platformId,
-      platformName: platformInfo.name,
-      title: cleanTitle ? `${platformInfo.name}: ${cleanTitle}` : `File dari ${platformInfo.name}`,
-      author: `@${parsedUrl.hostname.replace('www.', '')}`,
-      duration: 'HD',
-      thumbnail: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=80',
-      likes: 'Populer',
-      views: 'Publik',
-      date: 'Terdeteksi',
-      qualities: [
-        { id: 'q-1080', label: 'Video 1080p Full HD', resolution: '1080p', format: 'mp4', fileSize: '42.5 MB', isPopular: true, badge: 'Full HD' },
-        { id: 'q-720', label: 'Video 720p HD', resolution: '720p', format: 'mp4', fileSize: '21.0 MB' },
-      ],
-      audioQualities: [
-        { id: 'q-mp3-320', label: 'Audio MP3 320kbps', bitrate: '320 kbps', format: 'mp3', fileSize: '7.2 MB', isPopular: true, badge: 'High Quality' },
-      ],
-    };
-  } catch {
-    // Basic fallback
-    return {
-      id: `media-${Date.now()}`,
-      url,
-      platform: platformId,
-      platformName: platformInfo.name,
-      title: `Unduhan ${platformInfo.name}`,
-      author: `@${platformInfo.name.toLowerCase()}_creator`,
-      duration: 'HD',
-      thumbnail: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=80',
-      date: 'Terbaru',
-      qualities: [
-        { id: 'q-1080', label: 'Video 1080p Full HD', resolution: '1080p', format: 'mp4', fileSize: '38.4 MB', isPopular: true, badge: 'Full HD' },
-      ],
-      audioQualities: [
-        { id: 'q-mp3-320', label: 'Audio MP3 320kbps', bitrate: '320 kbps', format: 'mp3', fileSize: '7.8 MB', isPopular: true },
-      ],
-    };
-  }
+  // 4. If all real extraction methods fail, throw clear error instead of hardcoded placeholder
+  throw new Error('Gagal mengambil metadata media dari tautan ini. Pastikan konten bersifat publik.');
 }
 
 /**

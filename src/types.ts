@@ -9,9 +9,6 @@ export type PlatformId =
   | 'spotify'
   | 'soundcloud'
   | 'applemusic'
-  | 'gdrive'
-  | 'mediafire'
-  | 'terabox'
   | 'capcut'
   | 'douyin'
   | 'reddit'
@@ -24,7 +21,7 @@ export interface PlatformInfo {
   id: PlatformId;
   name: string;
   badge: string;
-  category: 'video' | 'audio' | 'cloud' | 'short';
+  category: 'video' | 'audio' | 'short';
   iconColor: string;
   textColor: string;
   bgColor: string;

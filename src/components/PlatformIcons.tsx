@@ -59,12 +59,6 @@ export const SoundCloudIcon: React.FC<IconProps> = ({ className = 'w-5 h-5', siz
   </svg>
 );
 
-export const GDriveIcon: React.FC<IconProps> = ({ className = 'w-5 h-5', size = 20 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
-    <path d="M7.74 3.75h8.52l6.24 10.8-4.26 7.45H9.72L3.48 11.2 7.74 3.75zm1.53 2.65L4.47 14.85h8.52l4.8-8.45H9.27z" />
-  </svg>
-);
-
 export const RenderPlatformIcon: React.FC<{ platformId: string; className?: string; size?: number }> = ({
   platformId,
   className = 'w-5 h-5',
@@ -89,8 +83,6 @@ export const RenderPlatformIcon: React.FC<{ platformId: string; className?: stri
       return <PinterestIcon className={className} size={size} />;
     case 'soundcloud':
       return <SoundCloudIcon className={className} size={size} />;
-    case 'gdrive':
-      return <GDriveIcon className={className} size={size} />;
     default:
       // Stylized fallback letter icon
       return (

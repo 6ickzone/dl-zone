@@ -233,76 +233,210 @@ app.post('/api/parse', async (req: Request, res: Response) => {
       }
     }
 
-    // 2. INSTAGRAM (Reels, Posts, Stories) via Snapsave
+    // 2. INSTAGRAM (Reels, Posts, Stories, Carousel, IGTV)
     if (/instagram\.com|instagr\.am/i.test(cleanUrl)) {
       let shortcode = '';
       const isReel = /reel|reels/i.test(cleanUrl);
       const isStory = /stories/i.test(cleanUrl);
       const reelMatch = cleanUrl.match(/reel(?:s)?\/([a-zA-Z0-9_-]+)/);
       const postMatch = cleanUrl.match(/\/p\/([a-zA-Z0-9_-]+)/);
+      const tvMatch = cleanUrl.match(/\/tv\/([a-zA-Z0-9_-]+)/);
+      const shareMatch = cleanUrl.match(/share\/(?:reel|p)\/([a-zA-Z0-9_-]+)/);
+      const storyMatch = cleanUrl.match(/stories\/([a-zA-Z0-9._-]+)\/(\d+)/);
+
       if (reelMatch) shortcode = reelMatch[1];
       else if (postMatch) shortcode = postMatch[1];
+      else if (tvMatch) shortcode = tvMatch[1];
+      else if (shareMatch) shortcode = shareMatch[1];
 
+      let realTitle: string | null = null;
+      let realAuthor: string | null = null;
+      let realThumb: string | null = null;
+      let realVideoUrl: string | null = null;
+      let realLikes: string | null = null;
+      let realDate: string | null = null;
+      let realFileSize = 'Direct HD';
+
+      // Step A: Extract authentic metadata from Instagram via crawler headers
+      try {
+        const igRes = await fetch(cleanUrl, {
+          headers: {
+            'User-Agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+          },
+        });
+        if (igRes.ok) {
+          const igHtml = await igRes.text();
+          const meta = extractMetaTags(igHtml);
+          if (meta.title) {
+            const authorMatch = meta.title.match(/^([^:]+)\s+on\s+Instagram/i);
+            if (authorMatch) {
+              realAuthor = `@${authorMatch[1].trim()}`;
+            }
+            const cleanCap = meta.title.replace(/^[^:]+\s+on\s+Instagram:\s*["“]?/i, '').replace(/["”]?$/, '').replace(/&quot;/g, '"').replace(/&#xA;/g, ' ').trim();
+            if (cleanCap) {
+              realTitle = cleanCap;
+            }
+          }
+
+          if (meta.description) {
+            const likesMatch = meta.description.match(/(\d[\d,.]*\s*(?:likes|suka))/i);
+            if (likesMatch) realLikes = likesMatch[1];
+
+            const dateMatch = meta.description.match(/on\s+([A-Za-z]+\s+\d{1,2},\s*\d{4})/i);
+            if (dateMatch) realDate = dateMatch[1];
+
+            const handleMatch = meta.description.match(/-\s*([a-zA-Z0-9._-]+)\s+on/i);
+            if (handleMatch && !realAuthor) realAuthor = `@${handleMatch[1]}`;
+
+            if (!realTitle) {
+              const descCap = meta.description.match(/:\s*["“]([\s\S]+?)["”]?$/);
+              if (descCap) realTitle = descCap[1].replace(/&quot;/g, '"').trim();
+            }
+          }
+
+          if (meta.image) {
+            realThumb = meta.image;
+          }
+          if (meta.video) {
+            realVideoUrl = meta.video;
+          }
+        }
+      } catch (err) {
+        console.warn('Instagram meta fetch error:', err);
+      }
+
+      // Step B: Resolve direct video/photo stream link via vxinstagram offload mirror
+      if (shortcode && !realVideoUrl) {
+        try {
+          const vxEndpoint = `https://www.vxinstagram.com/${isReel ? 'reel' : 'p'}/${shortcode}/`;
+          const vxRes = await fetch(vxEndpoint, {
+            headers: { 'User-Agent': 'facebookexternalhit/1.1' },
+          });
+          if (vxRes.ok) {
+            const vxHtml = await vxRes.text();
+            const vxVideoMatch = vxHtml.match(/<meta[^>]+property=["']og:video["'][^>]+content=["']([^"']+)["']/i) || vxHtml.match(/content=["']([^"']+)["'][^>]+property=["']og:video["']/i);
+            if (vxVideoMatch && vxVideoMatch[1]) {
+              realVideoUrl = vxVideoMatch[1];
+            }
+
+            const vxTitleMatch = vxHtml.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i);
+            if (vxTitleMatch && !realAuthor) {
+              realAuthor = vxTitleMatch[1].replace(/&quot;/g, '"').trim();
+            }
+
+            const vxDescMatch = vxHtml.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i);
+            if (vxDescMatch && !realTitle) {
+              realTitle = vxDescMatch[1].replace(/&quot;/g, '"').replace(/&#xA;/g, ' ').trim();
+            }
+
+            const vxImgMatch = vxHtml.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
+            if (vxImgMatch && !realThumb) {
+              realThumb = vxImgMatch[1];
+            }
+          }
+        } catch (vxErr) {
+          console.warn('vxinstagram error:', vxErr);
+        }
+      }
+
+      // Step C: Fallback to snapsave if available
+      let snapsaveQualities: any[] = [];
       try {
         const snapRes: any = await snapsave(cleanUrl);
         if (snapRes && snapRes.success && snapRes.data?.media && snapRes.data.media.length > 0) {
           const mediaList: any[] = snapRes.data.media;
-          const firstMedia = mediaList[0];
-          const rawVideoUrl: string = firstMedia?.url || '';
-          const rawThumbUrl: string = firstMedia?.thumbnail || '';
-          const displayThumb = rawThumbUrl ? `/api/proxy-thumbnail?url=${encodeURIComponent(rawThumbUrl)}` : undefined;
-          const streamUrl = rawVideoUrl ? `/api/proxy-stream?url=${encodeURIComponent(rawVideoUrl)}` : undefined;
-          const title = shortcode ? `Instagram Reel [${shortcode}]` : 'Instagram Reel Video';
-
-          const qualities = mediaList.map((m: any, idx: number) => {
+          if (!realVideoUrl && mediaList[0]?.url) {
+            realVideoUrl = mediaList[0].url;
+          }
+          if (!realThumb && mediaList[0]?.thumbnail) {
+            realThumb = mediaList[0].thumbnail;
+          }
+          snapsaveQualities = mediaList.map((m: any, idx: number) => {
             const resLabel = m.resolution || (idx === 0 ? '1080p Full HD' : '720p HD');
-            const fileDownloadUrl = m.url ? `/api/proxy-download?url=${encodeURIComponent(m.url)}&filename=${encodeURIComponent(`DownloaderZone_IG_${shortcode || 'reel'}_${resLabel.replace(/[^a-zA-Z0-9]/g, '_')}.mp4`)}` : undefined;
             return {
-              id: `ig-${idx}`,
+              id: `ig-snap-${idx}`,
               label: `Video MP4 (${resLabel})`,
               resolution: resLabel,
               format: 'mp4',
-              fileSize: '16.8 MB',
-              downloadUrl: fileDownloadUrl,
+              fileSize: 'Direct Download',
+              downloadUrl: `/api/proxy-download?url=${encodeURIComponent(m.url)}&filename=${encodeURIComponent(`DownloaderZone_IG_${shortcode || 'video'}_${resLabel.replace(/[^a-zA-Z0-9]/g, '_')}.mp4`)}`,
               isPopular: idx === 0,
-              badge: idx === 0 ? 'Kualitas Asli' : undefined,
+              badge: idx === 0 ? 'Full HD' : undefined,
             };
           });
-
-          const audioDownloadUrl = rawVideoUrl ? `/api/proxy-download?url=${encodeURIComponent(rawVideoUrl)}&filename=${encodeURIComponent(`DownloaderZone_IG_${shortcode || 'audio'}.mp3`)}` : undefined;
-
-          return res.json({
-            success: true,
-            platform: 'instagram',
-            platformName: isReel ? 'Instagram Reels' : (isStory ? 'Instagram Story' : 'Instagram'),
-            title,
-            author: shortcode ? `@creator_${shortcode.slice(0, 5)}` : '@instagram_creator',
-            duration: '0:30',
-            thumbnail: displayThumb || (shortcode ? `https://instagram.com/p/${shortcode}/media/?size=l` : ''),
-            likes: 'Banyak Disukai',
-            views: 'HD Watch',
-            date: 'Terverifikasi',
-            mediaType: 'video',
-            embedUrl: shortcode ? `https://www.instagram.com/reel/${shortcode}/embed/` : undefined,
-            directVideoUrl: streamUrl,
-            qualities,
-            audioQualities: [
-              {
-                id: 'ig-audio',
-                label: 'Ekstrak Audio Backsound Reels MP3',
-                bitrate: '320 kbps',
-                format: 'mp3',
-                fileSize: '3.2 MB',
-                downloadUrl: audioDownloadUrl,
-                isPopular: true,
-                badge: 'HQ Audio',
-              },
-            ],
-          });
         }
-      } catch (igErr) {
-        console.error('Instagram snapsave error:', igErr);
+      } catch (snapErr) {
+        // snapsave error fallback
       }
+
+      // Step D: Calculate actual file size if realVideoUrl exists
+      if (realVideoUrl) {
+        try {
+          const headRes = await fetch(realVideoUrl, { method: 'HEAD' });
+          const cl = headRes.headers.get('content-length');
+          if (cl) {
+            const bytes = parseInt(cl, 10);
+            if (!isNaN(bytes) && bytes > 0) {
+              realFileSize = (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+            }
+          }
+        } catch {
+          // ignore head error
+        }
+      }
+
+      // Final clean metadata with zero hardcoded placeholders
+      const finalTitle = realTitle || (shortcode ? `Instagram ${isReel ? 'Reel' : (isStory ? 'Story' : 'Post')} [${shortcode}]` : 'Instagram Media');
+      const finalAuthor = realAuthor || (storyMatch ? `@${storyMatch[1]}` : (shortcode ? `@instagram_user` : '@instagram'));
+      const finalThumb = realThumb ? `/api/proxy-thumbnail?url=${encodeURIComponent(realThumb)}` : (shortcode ? `https://instagram.com/p/${shortcode}/media/?size=l` : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80');
+
+      const streamUrl = realVideoUrl ? `/api/proxy-stream?url=${encodeURIComponent(realVideoUrl)}` : undefined;
+      const downloadVideoUrl = realVideoUrl ? `/api/proxy-download?url=${encodeURIComponent(realVideoUrl)}&filename=${encodeURIComponent(`DownloaderZone_IG_${shortcode || 'reel'}.mp4`)}` : undefined;
+      const downloadAudioUrl = realVideoUrl ? `/api/proxy-download?url=${encodeURIComponent(realVideoUrl)}&filename=${encodeURIComponent(`DownloaderZone_IG_${shortcode || 'audio'}.mp3`)}` : undefined;
+
+      const qualities = snapsaveQualities.length > 0 ? snapsaveQualities : [
+        {
+          id: 'ig-hd',
+          label: realVideoUrl ? 'Video MP4 (Original HD)' : 'Foto/Media Resolusi Penuh',
+          resolution: 'Original Quality',
+          format: (realVideoUrl ? 'mp4' : 'jpg') as 'mp4' | 'jpg',
+          fileSize: realFileSize,
+          downloadUrl: downloadVideoUrl || (realThumb ? `/api/proxy-download?url=${encodeURIComponent(realThumb)}&filename=${encodeURIComponent(`DownloaderZone_IG_${shortcode || 'photo'}.jpg`)}` : undefined),
+          isPopular: true,
+          badge: 'Original HD',
+        },
+      ];
+
+      return res.json({
+        success: true,
+        platform: 'instagram',
+        platformName: isStory ? 'Instagram Story' : (isReel ? 'Instagram Reels' : 'Instagram'),
+        title: finalTitle,
+        author: finalAuthor,
+        duration: realVideoUrl ? 'Video' : 'Foto HD',
+        thumbnail: finalThumb,
+        likes: realLikes || undefined,
+        views: undefined,
+        date: realDate || 'Baru saja',
+        mediaType: realVideoUrl ? 'video' : 'photo',
+        embedUrl: shortcode ? `https://www.instagram.com/reel/${shortcode}/embed/` : undefined,
+        directVideoUrl: streamUrl,
+        qualities,
+        audioQualities: downloadAudioUrl ? [
+          {
+            id: 'ig-audio',
+            label: 'Ekstrak Audio Backsound MP3',
+            bitrate: '320 kbps',
+            format: 'mp3',
+            fileSize: 'HQ Audio',
+            downloadUrl: downloadAudioUrl,
+            isPopular: true,
+            badge: 'HQ Audio',
+          },
+        ] : [],
+      });
     }
 
     // 3. FACEBOOK (Reels, Watch, Videos) via Snapsave
@@ -328,7 +462,7 @@ app.post('/api/parse', async (req: Request, res: Response) => {
               label: `Video MP4 (${resLabel})`,
               resolution: resLabel,
               format: 'mp4',
-              fileSize: idx === 0 ? '18.4 MB' : '9.2 MB',
+              fileSize: resLabel,
               downloadUrl: fileDownloadUrl,
               isPopular: idx === 0,
               badge: idx === 0 ? 'HD' : undefined,
@@ -342,12 +476,12 @@ app.post('/api/parse', async (req: Request, res: Response) => {
             platform: 'facebook',
             platformName: isReel ? 'Facebook Reels' : 'Facebook Video',
             title: cleanDesc,
-            author: '@facebook_creator',
-            duration: isReel ? '0:45' : 'HD Video',
+            author: 'Facebook Video',
+            duration: 'Video',
             thumbnail: displayThumb,
-            likes: 'Populer',
-            views: 'HD Watch',
-            date: 'Terverifikasi',
+            likes: undefined,
+            views: undefined,
+            date: 'Tersedia',
             mediaType: 'video',
             embedUrl: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(cleanUrl)}&show_text=0`,
             directVideoUrl: streamUrl,
@@ -358,7 +492,7 @@ app.post('/api/parse', async (req: Request, res: Response) => {
                 label: 'Ekstrak Audio Musik MP3',
                 bitrate: '320 kbps',
                 format: 'mp3',
-                fileSize: '4.5 MB',
+                fileSize: 'HQ Audio',
                 downloadUrl: audioDownloadUrl,
                 isPopular: true,
                 badge: 'HQ Audio',

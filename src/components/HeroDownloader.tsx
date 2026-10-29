@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { RenderPlatformIcon } from './PlatformIcons';
 import { SUPPORTED_PLATFORMS } from '../data/platforms';
+import { useLanguage } from '../context/LanguageContext';
 
 interface HeroDownloaderProps {
   urlInput: string;
@@ -30,6 +31,7 @@ export const HeroDownloader: React.FC<HeroDownloaderProps> = ({
   onScrollToPlatforms,
   detectedPlatformName,
 }) => {
+  const { t } = useLanguage();
   const [pasteError, setPasteError] = useState<string | null>(null);
 
   const handlePaste = async () => {
@@ -40,7 +42,7 @@ export const HeroDownloader: React.FC<HeroDownloaderProps> = ({
         setPasteError(null);
       }
     } catch {
-      setPasteError('Izin clipboard tidak tersedia. Silakan tempel manual.');
+      setPasteError(t.hero.clipboardError);
       setTimeout(() => setPasteError(null), 3000);
     }
   };
@@ -54,32 +56,33 @@ export const HeroDownloader: React.FC<HeroDownloaderProps> = ({
     { label: 'Instagram Reel', url: 'https://www.instagram.com/reel/DeG8AQxT5OD/?mdxt=MTFoeXZscWxkbGRkbw==' },
     { label: 'Facebook Reel', url: 'https://www.facebook.com/share/r/1MisQHQbyR/' },
     { label: 'Spotify Album', url: 'https://open.spotify.com/album/1HaAdGP06ZqMnoxDVhDtBP?si=VWe5GZG1QwipKvGN-2kicw&utm_source=copy-link&nd=1&dlsi=da11d5a5e8fe4fb9' },
-    { label: 'Pinterest Foto', url: 'https://pin.it/6v43jV68U' },
+    { label: 'Pinterest HD', url: 'https://pin.it/6v43jV68U' },
     { label: 'YouTube 4K', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
   ];
 
   const primaryPlatforms = ['tiktok', 'youtube', 'instagram', 'facebook', 'spotify', 'twitter'];
+  const remainingCount = SUPPORTED_PLATFORMS.length - primaryPlatforms.length; // 17 - 6 = 11
 
   return (
     <section id="download" className="relative pt-12 pb-14 px-4 sm:px-6">
       <div className="max-w-3xl mx-auto text-center">
-        {/* Screenshot Badge: ☁ Downloader */}
+        {/* Badge: ☁ Downloader */}
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-500/20 mb-6">
           <CloudDownload className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Downloader</span>
+          <span>{t.hero.badge}</span>
         </div>
 
-        {/* Screenshot Headline */}
+        {/* Simplified Headline: Download Videos&Music */}
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight leading-[1.15] mb-4 text-balance">
-          Download Video, Musik & File Cukup Tempel Link
+          {t.hero.headline}
         </h1>
 
-        {/* Screenshot Subtitle */}
+        {/* Subtitle */}
         <p className="text-sm sm:text-base text-slate-400 max-w-2xl mx-auto mb-7 leading-relaxed">
-          Mendukung 20 platform. Platform dikenali otomatis dari link, tanpa daftar dan tanpa ribet.
+          {t.hero.subtitle}
         </p>
 
-        {/* Screenshot Mini Badges Row: TikTok, YouTube, IG, FB, Spotify, X, +14 */}
+        {/* Mini Badges Row: TikTok, YouTube, IG, FB, Spotify, X, +11 */}
         <div className="flex items-center justify-center gap-2 mb-8 flex-wrap">
           {primaryPlatforms.map((pid) => {
             const p = SUPPORTED_PLATFORMS.find((item) => item.id === pid);
@@ -88,8 +91,8 @@ export const HeroDownloader: React.FC<HeroDownloaderProps> = ({
               <button
                 key={pid}
                 onClick={() => onSelectSample(p.sampleUrl)}
-                title={`Unduh dari ${p.name}`}
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-white transition-all transform hover:scale-110 active:scale-95 shadow-sm border border-slate-700/60"
+                title={`Download from ${p.name}`}
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-white transition-all transform hover:scale-110 active:scale-95 shadow-sm border border-slate-700/60 cursor-pointer"
                 style={{ backgroundColor: p.iconColor === '#000000' ? '#141c24' : p.iconColor }}
               >
                 <RenderPlatformIcon platformId={p.id} className="w-5 h-5 text-white" />
@@ -98,10 +101,10 @@ export const HeroDownloader: React.FC<HeroDownloaderProps> = ({
           })}
           <button
             onClick={onScrollToPlatforms}
-            className="w-10 h-10 rounded-xl flex items-center justify-center bg-slate-800/90 text-slate-300 hover:text-white border border-slate-700 hover:border-emerald-500/50 text-xs font-bold transition-all hover:scale-105"
-            title="Lihat semua 20 platform"
+            className="w-10 h-10 rounded-xl flex items-center justify-center bg-slate-800/90 text-slate-300 hover:text-white border border-slate-700 hover:border-emerald-500/50 text-xs font-bold transition-all hover:scale-105 cursor-pointer"
+            title={`View all ${SUPPORTED_PLATFORMS.length} platforms`}
           >
-            +14
+            +{remainingCount}
           </button>
         </div>
 
@@ -116,7 +119,7 @@ export const HeroDownloader: React.FC<HeroDownloaderProps> = ({
               type="text"
               value={urlInput}
               onChange={(e) => onUrlChange(e.target.value)}
-              placeholder="Paste link di sini (Instagram, TikTok, FB, YouTube, dll)..."
+              placeholder={t.hero.placeholder}
               className="w-full bg-transparent text-white placeholder-slate-400 text-sm sm:text-base px-2 py-3.5 focus:outline-none"
             />
 
@@ -126,8 +129,8 @@ export const HeroDownloader: React.FC<HeroDownloaderProps> = ({
                 <button
                   type="button"
                   onClick={handleClear}
-                  className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700/50 transition-colors"
-                  title="Hapus"
+                  className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700/50 transition-colors cursor-pointer"
+                  title="Clear"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -136,19 +139,19 @@ export const HeroDownloader: React.FC<HeroDownloaderProps> = ({
               <button
                 type="button"
                 onClick={handlePaste}
-                className="hidden sm:flex items-center gap-1 px-3 py-2 text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 rounded-lg transition-colors border border-slate-700/60"
-                title="Tempel dari Clipboard"
+                className="hidden sm:flex items-center gap-1 px-3 py-2 text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 rounded-lg transition-colors border border-slate-700/60 cursor-pointer"
+                title={t.hero.pasteBtn}
               >
                 <ClipboardPaste className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Paste</span>
+                <span>{t.hero.pasteBtn}</span>
               </button>
 
-              {/* The emerald green button from screenshot */}
+              {/* The emerald green button */}
               <button
                 type="submit"
                 disabled={isLoading}
                 className="h-11 w-12 sm:w-14 bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 disabled:opacity-50 text-slate-950 font-bold rounded-lg flex items-center justify-center transition-all cursor-pointer shadow-md shadow-emerald-500/20 shrink-0 ml-1"
-                aria-label="Download sekarang"
+                aria-label={t.hero.downloadBtn}
               >
                 {isLoading ? (
                   <div className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
@@ -170,13 +173,13 @@ export const HeroDownloader: React.FC<HeroDownloaderProps> = ({
         {detectedPlatformName && urlInput && (
           <div className="mt-2.5 inline-flex items-center gap-1.5 text-xs text-emerald-400 font-medium bg-emerald-950/40 px-3 py-1 rounded-full border border-emerald-500/20 animate-in fade-in">
             <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Platform terdeteksi: <strong>{detectedPlatformName}</strong></span>
+            <span>{t.hero.detectedPlatform}: <strong>{detectedPlatformName}</strong></span>
           </div>
         )}
 
         {/* Quick test sample pills */}
         <div className="mt-4 flex items-center justify-center gap-1.5 flex-wrap text-xs text-slate-400">
-          <span className="text-slate-500 font-medium">Contoh link:</span>
+          <span className="text-slate-500 font-medium">{t.hero.sampleLinksLabel}</span>
           {sampleLinks.map((sample, idx) => (
             <button
               key={idx}

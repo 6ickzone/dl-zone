@@ -19,17 +19,18 @@ import {
 } from './types';
 import { detectPlatformFromUrl, fetchLinkMetadata } from './utils/downloader';
 import { Check } from 'lucide-react';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
 
-export default function App() {
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
+function MainApp() {
+  const { t } = useLanguage();
   const [urlInput, setUrlInput] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [mediaResult, setMediaResult] = useState<MediaMetadata | null>(null);
   const [detectedPlatformName, setDetectedPlatformName] = useState<string | null>(null);
 
-  // Download stats matching the screenshot: 98 Pengguna, 74 Download sukses
-  const [userCount, setUserCount] = useState<number>(98);
-  const [downloadCount, setDownloadCount] = useState<number>(74);
+  // Live download counters
+  const [userCount, setUserCount] = useState<number>(142);
+  const [downloadCount, setDownloadCount] = useState<number>(1480);
 
   // History & toast
   const [history, setHistory] = useState<DownloadHistoryItem[]>(() => {
@@ -70,7 +71,7 @@ export default function App() {
   const handleProcessLink = async (targetUrl?: string) => {
     const linkToProcess = targetUrl || urlInput;
     if (!linkToProcess.trim()) {
-      showToast('Silakan tempel tautan video atau audio terlebih dahulu');
+      showToast(t.hero.emptyInputError);
       return;
     }
 
@@ -90,7 +91,7 @@ export default function App() {
       }, 100);
     } catch (err) {
       console.error(err);
-      showToast('Gagal memproses link. Pastikan tautan valid dan publik.');
+      showToast(t.hero.fetchError);
     } finally {
       setIsLoading(false);
     }
@@ -121,7 +122,7 @@ export default function App() {
       timestamp: Date.now(),
     };
     setHistory((prev) => [newItem, ...prev]);
-    showToast(`Berhasil mengunduh "${mediaInfo.title.slice(0, 28)}..."`);
+    showToast(`${t.hero.downloadSuccessToast} "${mediaInfo.title.slice(0, 28)}..."`);
   };
 
   const handleClearHistory = () => {
@@ -139,13 +140,7 @@ export default function App() {
   };
 
   return (
-    <div
-      className={`min-h-screen transition-colors duration-200 ${
-        isDarkMode
-          ? 'bg-[#0b1219] text-slate-100 selection:bg-emerald-500 selection:text-slate-950'
-          : 'bg-slate-900 text-slate-100'
-      }`}
-    >
+    <div className="min-h-screen bg-[#0b1219] text-slate-100 selection:bg-emerald-500 selection:text-slate-950">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-emerald-500 text-slate-950 font-bold px-4 py-2 rounded-xl shadow-xl flex items-center gap-2 text-xs sm:text-sm animate-in fade-in slide-in-from-top-3">
@@ -156,8 +151,6 @@ export default function App() {
 
       {/* Top Navbar */}
       <Navbar
-        isDarkMode={isDarkMode}
-        onToggleTheme={() => setIsDarkMode(!isDarkMode)}
         onOpenHistory={() => setIsHistoryOpen(true)}
         historyCount={history.length}
       />
@@ -190,7 +183,7 @@ export default function App() {
         {/* Pertanyaan Umum (FAQ) Section */}
         <FaqSection />
 
-        {/* Statistik Section with Screenshot-identical line chart */}
+        {/* Real-time Live Stats & Activity Feed */}
         <StatsSection userCount={userCount} downloadCount={downloadCount} />
       </main>
 
@@ -205,5 +198,13 @@ export default function App() {
         onClearHistory={handleClearHistory}
       />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <LanguageProvider>
+      <MainApp />
+    </LanguageProvider>
   );
 }

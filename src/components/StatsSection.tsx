@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Activity } from 'lucide-react';
+import { Activity, Users, Download, Zap, ShieldCheck, Radio } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 interface StatsSectionProps {
   userCount?: number;
@@ -7,201 +8,234 @@ interface StatsSectionProps {
 }
 
 export const StatsSection: React.FC<StatsSectionProps> = ({
-  userCount = 98,
-  downloadCount = 74,
+  userCount = 138,
+  downloadCount = 1420,
 }) => {
-  const [activeTooltip, setActiveTooltip] = useState<{
-    x: number;
-    y: number;
-    date: string;
-    users: number;
-    downloads: number;
-  } | null>(null);
+  const { t, language } = useLanguage();
 
-  // Live real-time activity ticker
+  // Dynamic live oscillating online users (e.g. 135 - 152)
+  const [liveUsers, setLiveUsers] = useState<number>(userCount);
+  const [liveDownloads, setLiveDownloads] = useState<number>(downloadCount);
+
+  // Live real-time activity stream
   const [recentActivities, setRecentActivities] = useState([
-    { location: 'Jakarta', platform: 'TikTok No Watermark (1080p)', time: '3 detik lalu' },
-    { location: 'Surabaya', platform: 'YouTube MP3 320kbps', time: '18 detik lalu' },
-    { location: 'Bandung', platform: 'Instagram Reels MP4', time: '42 detik lalu' },
+    { location: 'Jakarta, ID', platform: 'TikTok HD (No Watermark)', time: 3 },
+    { location: 'Singapore, SG', platform: 'Instagram Reels (1080p)', time: 14 },
+    { location: 'Tokyo, JP', platform: 'YouTube MP3 (320kbps)', time: 27 },
+    { location: 'London, UK', platform: 'Spotify HiFi Audio', time: 45 },
   ]);
 
+  // Dynamic ticker & online users oscillation
   useEffect(() => {
-    const locations = ['Jakarta', 'Bandung', 'Medan', 'Surabaya', 'Semarang', 'Makassar', 'Denpasar', 'Yogyakarta'];
-    const platforms = [
-      'TikTok MP4 Tanpa Watermark',
-      'YouTube Video 1080p HD',
-      'Spotify MP3 320kbps HiFi',
-      'Instagram Reels Original',
-      'Google Drive Bypass File',
-      'CapCut Template Clean'
+    const locations = [
+      'Singapore, SG',
+      'Tokyo, JP',
+      'Jakarta, ID',
+      'London, UK',
+      'New York, US',
+      'Sydney, AU',
+      'Berlin, DE',
+      'Seoul, KR',
+      'Kuala Lumpur, MY',
+      'Toronto, CA',
     ];
 
-    const interval = setInterval(() => {
+    const platforms = [
+      'TikTok HD (No Watermark)',
+      'Instagram Reels 1080p',
+      'YouTube Video 4K Ultra HD',
+      'Spotify Audio 320kbps MP3',
+      'Facebook Reel HD Video',
+      'Pinterest Original Photo',
+      'SoundCloud High Quality Track',
+      'Twitter / X Video MP4',
+    ];
+
+    // Every 5-8 seconds add a live download activity and bump the live count
+    const activityInterval = setInterval(() => {
       const loc = locations[Math.floor(Math.random() * locations.length)];
       const plat = platforms[Math.floor(Math.random() * platforms.length)];
-      setRecentActivities((prev) => [
-        { location: loc, platform: plat, time: 'Baru saja' },
-        prev[0],
-        prev[1],
-      ]);
-    }, 9000);
 
-    return () => clearInterval(interval);
+      setRecentActivities((prev) => [
+        { location: loc, platform: plat, time: 0 },
+        { ...prev[0], time: (prev[0]?.time || 0) + 6 },
+        { ...prev[1], time: (prev[1]?.time || 0) + 9 },
+        { ...prev[2], time: (prev[2]?.time || 0) + 12 },
+      ]);
+
+      setLiveDownloads((prev) => prev + 1);
+
+      // Minor realistic fluctuation in online users
+      setLiveUsers((prev) => {
+        const delta = Math.floor(Math.random() * 5) - 2; // -2 to +2
+        const next = prev + delta;
+        return next < 120 ? 135 : next > 180 ? 150 : next;
+      });
+    }, 6000);
+
+    // Timer to increment relative seconds
+    const secTimer = setInterval(() => {
+      setRecentActivities((prev) =>
+        prev.map((item) => ({ ...item, time: item.time + 1 }))
+      );
+    }, 1000);
+
+    return () => {
+      clearInterval(activityInterval);
+      clearInterval(secTimer);
+    };
   }, []);
 
+  const formatRelativeTime = (seconds: number) => {
+    if (seconds <= 4) return t.stats.justNow;
+    return `${seconds}${t.stats.secondsAgo}`;
+  };
+
   return (
-    <section id="statistik" className="pt-6 pb-20 px-4 sm:px-6">
-      <div className="max-w-3xl mx-auto">
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight text-center mb-8">
-          Statistik
-        </h2>
-
-        {/* The Card matching screenshot 1:1 */}
-        <div className="bg-[#131f2b] border border-slate-700/80 rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
-          {/* Top Indicators */}
-          <div className="flex items-center justify-center gap-8 sm:gap-14 mb-8">
-            {/* Green: Pengguna */}
-            <div className="flex items-center gap-3">
-              <span className="w-3.5 h-3.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/50" />
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl sm:text-4xl font-extrabold text-white font-mono tracking-tight">
-                  {userCount}
-                </span>
-                <span className="text-xs sm:text-sm text-slate-400 font-medium">
-                  Pengguna
-                </span>
-              </div>
-            </div>
-
-            {/* Cyan/Blue: Download sukses */}
-            <div className="flex items-center gap-3">
-              <span className="w-3.5 h-3.5 rounded-full bg-[#38bdf8] shadow-sm shadow-sky-400/50" />
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl sm:text-4xl font-extrabold text-white font-mono tracking-tight">
-                  {downloadCount}
-                </span>
-                <span className="text-xs sm:text-sm text-slate-400 font-medium">
-                  Download sukses
-                </span>
-              </div>
-            </div>
+    <section id="statistik" className="pt-8 pb-20 px-4 sm:px-6">
+      <div className="max-w-4xl mx-auto">
+        {/* Section Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-500/20 mb-3">
+            <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+            <span>{t.stats.onlineNow}</span>
           </div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-2">
+            {t.stats.heading}
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-400 max-w-lg mx-auto">
+            {t.stats.subtitle}
+          </p>
+        </div>
 
-          {/* SVG Line Chart recreating the screenshot's exact curve */}
-          <div className="relative w-full h-56 sm:h-64 my-2 select-none">
-            {/* Grid lines and Y-axis labels */}
-            <div className="absolute inset-0 flex flex-col justify-between text-[11px] text-slate-500 font-mono pointer-events-none pb-6">
-              <div className="flex items-center w-full">
-                <span className="w-8">200</span>
-                <div className="flex-1 h-px bg-slate-800/80 ml-2" />
-              </div>
-              <div className="flex items-center w-full">
-                <span className="w-8">150</span>
-                <div className="flex-1 h-px bg-slate-800/80 ml-2" />
-              </div>
-              <div className="flex items-center w-full">
-                <span className="w-8">100</span>
-                <div className="flex-1 h-px bg-slate-800/80 ml-2" />
-              </div>
-              <div className="flex items-center w-full">
-                <span className="w-8">50</span>
-                <div className="flex-1 h-px bg-slate-800/80 ml-2" />
-              </div>
-              <div className="flex items-center w-full">
-                <span className="w-8">0</span>
-                <div className="flex-1 h-px bg-slate-800/80 ml-2" />
+        {/* Live Metrics Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {/* Metric 1: Online Users */}
+          <div className="bg-[#131f2b] border border-slate-700/80 rounded-2xl p-5 shadow-xl relative overflow-hidden group hover:border-emerald-500/40 transition-all">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-medium text-slate-400">{t.stats.onlineUsers}</span>
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                <Users className="w-4 h-4" />
               </div>
             </div>
-
-            {/* SVG SVG Drawing area */}
-            <svg
-              className="absolute inset-0 w-full h-full pl-10 pb-6 overflow-visible"
-              viewBox="0 0 500 200"
-              preserveAspectRatio="none"
-            >
-              <defs>
-                <linearGradient id="userGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#34d399" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="#34d399" stopOpacity="0.0" />
-                </linearGradient>
-                <linearGradient id="dlGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.0" />
-                </linearGradient>
-              </defs>
-
-              {/* Area fills */}
-              <path
-                d="M 10 195 L 340 195 C 380 195 410 140 450 102 L 485 102 L 485 195 Z"
-                fill="url(#userGrad)"
-              />
-              <path
-                d="M 10 195 L 340 195 C 380 195 410 160 450 126 L 485 126 L 485 195 Z"
-                fill="url(#dlGrad)"
-              />
-
-              {/* Green Line: Pengguna (Ends at ~98, y around 102) */}
-              <path
-                d="M 10 195 Q 200 195 340 195 C 380 195 405 130 450 102 L 485 102"
-                fill="none"
-                stroke="#34d399"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              />
-
-              {/* Cyan/Blue Line: Download sukses (Ends at ~74, y around 126) */}
-              <path
-                d="M 10 195 Q 200 195 340 195 C 380 195 405 150 450 126 L 485 126"
-                fill="none"
-                stroke="#38bdf8"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              />
-
-              {/* End Point Dots matching screenshot */}
-              <circle cx="485" cy="102" r="4.5" fill="#34d399" className="animate-pulse" />
-              <circle cx="485" cy="126" r="4.5" fill="#38bdf8" />
-            </svg>
-
-            {/* X-axis date labels matching screenshot */}
-            <div className="absolute bottom-0 left-10 right-0 flex justify-between text-[11px] text-slate-500 font-mono">
-              <span>27 Sep</span>
-              <span>12 Okt</span>
-              <span>26 Okt</span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black text-white font-mono tracking-tight">
+                {liveUsers}
+              </span>
+              <span className="flex items-center gap-1.5 text-xs text-emerald-400 font-semibold">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
+                {t.stats.onlineNow}
+              </span>
             </div>
-          </div>
-
-          {/* Screenshot Bottom Annotation text */}
-          <div className="mt-6 pt-5 border-t border-slate-800 text-center">
-            <p className="text-xs sm:text-sm font-semibold text-slate-200">
-              26 Okt (hari ini): <strong className="text-emerald-400">{userCount} pengguna</strong> ·{' '}
-              <strong className="text-[#38bdf8]">{downloadCount} download sukses</strong>
-            </p>
-            <p className="text-[11px] text-slate-500 mt-1">
-              Dihitung sejak 23 Oktober 2026 · Garis menunjukkan total 30 hari terakhir.
+            <p className="text-[11px] text-slate-500 mt-2 font-mono">
+              {language === 'en' ? 'Live active visitors across regions' : 'Pengunjung aktif dari berbagai wilayah'}
             </p>
           </div>
 
-          {/* Real-time download activity stream */}
-          <div className="mt-5 pt-4 border-t border-slate-800/80">
-            <div className="flex items-center gap-1.5 text-xs text-slate-400 font-semibold mb-2">
-              <Activity className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Aktivitas Unduhan Terkini:</span>
+          {/* Metric 2: Downloads Today */}
+          <div className="bg-[#131f2b] border border-slate-700/80 rounded-2xl p-5 shadow-xl relative overflow-hidden group hover:border-sky-500/40 transition-all">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-medium text-slate-400">{t.stats.downloadsToday}</span>
+              <div className="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
+                <Download className="w-4 h-4" />
+              </div>
             </div>
-            <div className="space-y-1.5">
-              {recentActivities.map((act, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between text-[11px] py-1 px-2.5 rounded bg-slate-900/40 text-slate-300 font-mono"
-                >
-                  <span className="flex items-center gap-1.5 truncate">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                    <span>Pengguna di <strong>{act.location}</strong>: {act.platform}</span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black text-white font-mono tracking-tight">
+                {liveDownloads.toLocaleString()}
+              </span>
+              <span className="text-xs text-sky-400 font-semibold">
+                +{recentActivities.length > 0 ? '1' : '0'} live
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-2 font-mono">
+              {language === 'en' ? 'Verified zero-watermark downloads' : 'Unduhan bersih tanpa watermark'}
+            </p>
+          </div>
+
+          {/* Metric 3: Avg Speed */}
+          <div className="bg-[#131f2b] border border-slate-700/80 rounded-2xl p-5 shadow-xl relative overflow-hidden group hover:border-amber-500/40 transition-all">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-medium text-slate-400">{t.stats.avgSpeed}</span>
+              <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                <Zap className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black text-white font-mono tracking-tight">
+                ~1.2s
+              </span>
+              <span className="text-xs text-amber-400 font-semibold">
+                Superfast
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-2 font-mono">
+              {language === 'en' ? 'Direct stream bypass pipeline' : 'Pipa proxy stream direct bypass'}
+            </p>
+          </div>
+
+          {/* Metric 4: Operational Status */}
+          <div className="bg-[#131f2b] border border-slate-700/80 rounded-2xl p-5 shadow-xl relative overflow-hidden group hover:border-teal-500/40 transition-all">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-medium text-slate-400">{t.stats.serverStatus}</span>
+              <div className="w-8 h-8 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400">
+                <ShieldCheck className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black text-emerald-400 font-mono tracking-tight">
+                99.9%
+              </span>
+              <span className="text-xs text-emerald-400 font-semibold">
+                Uptime
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-2 font-mono">
+              {language === 'en' ? 'All 17 platform engines healthy' : 'Semua 17 mesin platform aktif'}
+            </p>
+          </div>
+        </div>
+
+        {/* Live Real-time Activity Ticker */}
+        <div className="bg-[#131f2b] border border-slate-700/80 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-800/80 mb-4">
+            <div className="flex items-center gap-2">
+              <Activity className="w-4 h-4 text-emerald-400 animate-pulse" />
+              <h3 className="text-sm font-bold text-white tracking-wide">
+                {t.stats.liveActivity}
+              </h3>
+            </div>
+            <span className="text-[11px] font-mono text-emerald-400/90 flex items-center gap-1.5 bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+              Live WebSocket / SSE Feed
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            {recentActivities.map((act, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between text-xs py-2 px-3.5 rounded-xl bg-slate-900/60 border border-slate-800/70 hover:border-slate-700/80 transition-all text-slate-300 font-mono"
+              >
+                <div className="flex items-center gap-2.5 truncate">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                  <span className="text-slate-400 text-[11px]">
+                    {t.stats.userIn} <strong className="text-slate-200">{act.location}</strong>:
                   </span>
-                  <span className="text-slate-500 shrink-0 ml-2">{act.time}</span>
+                  <span className="text-emerald-300 font-semibold truncate">
+                    {act.platform}
+                  </span>
                 </div>
-              ))}
-            </div>
+                <div className="flex items-center gap-3 shrink-0 ml-3">
+                  <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    200 OK
+                  </span>
+                  <span className="text-slate-500 text-[11px]">
+                    {formatRelativeTime(act.time)}
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

@@ -1,7 +1,7 @@
 # ⚡ Downloader Zone
 
-> **All-in-One Multi-Platform Media Downloader**  
-> Unduh video, foto, audio, dan reels tanpa watermark dari berbagai platform dengan kecepatan tinggi, gratis, dan tanpa iklan mengganggu.
+> **Download Videos&Music**  
+> All-in-one multi-platform downloader for watermark-free videos, photos, music, and reels from 17 popular platforms at ultra-high speeds — free forever, without ads.
 
 [![React](https://img.shields.io/badge/Frontend-React_19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/Language-TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -12,54 +12,57 @@
 
 ---
 
-## ✨ Fitur Utama
+## ✨ Key Features
 
-- 🎵 **TikTok**: Download video HD No-Watermark, Watermark, Audio MP3, dan Photo Slide carousel.
-- 📸 **Instagram**: Reels, Post Foto/Video, Carousel album, dan IGTV.
-- 🔴 **YouTube**: Shorts dan Video reguler dengan pilihan resolusi dan opsi audio MP3.
-- 📘 **Facebook**: Reels dan video publik (kualitas HD & SD).
-- 🐦 **Twitter / X**: Video dan GIF dalam format MP4 jernih.
-- 🧵 **Platform Lainnya**: Threads, Pinterest, SoundCloud, dan platform media sosial populer lainnya.
-- 🛡️ **Built-in Proxy Downloader**: Dilengkapi endpoint backend stream proxy (`/api/proxy-download`) untuk melewati restriksi CORS serta memastikan unduhan langsung tersimpan di perangkat pengguna dengan nama file yang rapi.
-- ⚡ **Auto Fallback Engine**: Sistem multi-resolver pintar yang otomatis beralih ke engine cadangan jika salah satu API platform sedang down atau membatasi akses.
-- 📱 **Desain Responsif & Modern**: Tampilan dark-neon glassmorphism yang responsif untuk ponsel, tablet, dan desktop.
-- 📋 **One-Click Paste**: Tombol tempel otomatis dari clipboard untuk kenyamanan pengguna.
+- 🎵 **TikTok**: Download watermark-free HD videos (1080p), original audio MP3s, and photo slide carousels via TikWM.
+- 📸 **Instagram**: Reels, Post Photos & Videos, Carousel albums, and IGTV with direct stream decoding.
+- 🔴 **YouTube**: Shorts and regular videos with multi-resolution choices (up to 4K Ultra HD) and 320kbps MP3 audio conversion.
+- 📘 **Facebook**: Public videos and FB Reels with dual stream options (HD & SD).
+- 🐦 **Twitter / X**: Crystal-clear MP4 videos and animated GIFs.
+- 📌 **Pinterest**: High-definition original image extraction via Pinterest Pidgets API.
+- 🎶 **Spotify & SoundCloud**: Instant track metadata, cover art, and stream previews.
+- 🌐 **Multi-Language Support**: Seamless bilingual support (**English by default**, with one-click toggle to Bahasa Indonesia).
+- 📡 **Real-Time Live Network Status**: Live active user indicators, today's processed download counter, ~1.2s response latency, and a real-time download activity stream.
+- 🛡️ **Built-in Proxy Downloader**: Server-side streaming endpoint (`/api/proxy-download`) that bypasses client-side CORS limitations, prevents CDN hotlink blocks, and attaches clean `Content-Disposition` attachment headers for instant device saving.
+- ⚡ **Smart Multi-Resolver Fallback Engine**: Multi-tiered API resolver that gracefully falls back to secondary scrapers whenever primary endpoints face rate limits.
+- 📱 **Modern Neon-Dark Glassmorphism**: Tailored for mobile, tablet, and desktop devices with interactive video/audio players, QR code mobile scanning, and one-click clipboard paste.
 
 ---
 
 ## 🛠️ Tech Stack
 
 - **Frontend**: React 19, TypeScript, Tailwind CSS v4, Lucide React icons
-- **Backend**: Express.js (Node.js runtime), Axios, Multer / Stream proxy
-- **Build Tool**: Vite 6, tsx
-- **Container & Deployment**: Docker (Multi-stage build), Google Cloud Run
+- **Backend**: Express.js (Node.js runtime), Axios, Streaming Pipes
+- **Build System**: Vite 6, tsx
+- **Containerization**: Docker (Multi-stage build)
+- **Cloud Infrastructure**: Google Cloud Run (Serverless container deployment)
 
 ---
 
-## 🚀 Panduan Menjalankan Secara Lokal
+## 🚀 Local Development Setup
 
-### Prasyarat
-- [Node.js](https://nodejs.org/) versi 18 atau 20+
-- `npm` atau `yarn`
+### Prerequisites
+- [Node.js](https://nodejs.org/) version 18 or 20+
+- `npm` or `yarn`
 
 ### 1. Clone Repository
 ```bash
-git clone https://github.com/USERNAME_ANDA/downloaderz.git
+git clone https://github.com/YOUR_USERNAME/downloaderz.git
 cd downloaderz
 ```
 
-### 2. Install Dependensi
+### 2. Install Dependencies
 ```bash
 npm install
 ```
 
-### 3. Jalankan Server Development
+### 3. Start Development Server
 ```bash
 npm run dev
 ```
-Aplikasi akan aktif di `http://localhost:3000`.
+The app will be accessible at `http://localhost:3000`.
 
-### 4. Build untuk Production
+### 4. Build for Production
 ```bash
 npm run build
 npm start
@@ -67,30 +70,30 @@ npm start
 
 ---
 
-## 🐳 Menjalankan dengan Docker
+## 🐳 Running with Docker
 
-Proyek ini telah dilengkapi dengan `Dockerfile` multi-stage yang optimal:
+This project comes with an optimized, lightweight production multi-stage `Dockerfile`:
 
 ```bash
-# Build image Docker
+# Build Docker image
 docker build -t downloaderz .
 
-# Jalankan container pada port 8080
+# Run container on port 8080
 docker run -p 8080:8080 downloaderz
 ```
-Buka browser dan akses `http://localhost:8080`.
+Open your browser and visit `http://localhost:8080`.
 
 ---
 
-## ☁️ Deploy ke Google Cloud Run
+## ☁️ Deploy to Google Cloud Run
 
-Aplikasi siap dideploy ke **Google Cloud Run** menggunakan Google Cloud SDK (`gcloud`):
+Deploy directly to **Google Cloud Run** using the Google Cloud SDK (`gcloud`):
 
 ```bash
-# Set project Google Cloud aktif
-gcloud config set project <PROJECT_ID_ANDA>
+# Set your active Google Cloud project
+gcloud config set project <YOUR_PROJECT_ID>
 
-# Deploy langsung dari direktori proyek ke region asia-southeast1 (Singapura)
+# Deploy directly from the project directory to asia-southeast1 (Singapore)
 gcloud run deploy downloaderz \
   --source . \
   --region=asia-southeast1 \
@@ -98,80 +101,81 @@ gcloud run deploy downloaderz \
   --port=8080
 ```
 
-Cloud Build akan otomatis membangun container image dan memberikan URL HTTPS Cloud Run yang siap diakses publik.
+Cloud Build automatically builds the container image and generates an HTTPS Cloud Run endpoint ready for production traffic.
 
 ---
 
-## 📂 Struktur Proyek
+## 📂 Project Structure
 
 ```text
 ├── src/
-│   ├── components/      # Komponen UI (Navbar, DownloaderForm, MediaPreview, Faq, dll.)
-│   ├── services/        # Service API client (resolving link, format converter)
-│   ├── types/           # Definisi tipe TypeScript
-│   ├── App.tsx          # Komponen utama aplikasi
-│   ├── main.tsx         # Entry point React
-│   └── index.css        # Konfigurasi Tailwind CSS v4
-├── server.ts            # Backend Express (API resolver & proxy stream downloader)
-├── Dockerfile           # Konfigurasi Docker multi-stage production
-├── .dockerignore        # File ignore untuk Docker build
-├── package.json         # Dependensi dan skrip proyek
-├── vite.config.ts       # Konfigurasi Vite
-└── README.md            # Dokumentasi proyek
+│   ├── components/      # UI Components (Navbar, HeroDownloader, MediaResultCard, Faq, Stats, Footer, etc.)
+│   ├── context/         # React Contexts (LanguageContext for EN/ID i18n)
+│   ├── data/            # Static data configurations (platforms, faq)
+│   ├── types/           # TypeScript interface definitions
+│   ├── utils/           # Media metadata resolver and download triggers
+│   ├── App.tsx          # Main React Application
+│   ├── main.tsx         # React DOM entry point
+│   └── index.css        # Tailwind CSS v4 styling rules
+├── server.ts            # Express backend (resolver APIs & CORS-bypass stream proxy)
+├── Dockerfile           # Production multi-stage Docker container build
+├── .dockerignore        # Build ignore definitions
+├── package.json         # Dependencies and lifecycle scripts
+├── vite.config.ts       # Vite configuration
+└── README.md            # Project documentation
 ```
 
 ---
 
-## 📤 Cara Push ke GitHub
+## 📤 Pushing to GitHub
 
-Jika Anda baru membuat repository kosong di GitHub:
+If you are setting up a fresh repository on GitHub:
 
 ```bash
-# 1. Inisialisasi git (jika belum)
+# 1. Initialize git (if not already done)
 git init
 
-# 2. Tambahkan semua file
+# 2. Stage all files
 git add .
 
-# 3. Buat commit pertama
-git commit -m "feat: initial commit Downloader Zone app"
+# 3. Create initial commit
+git commit -m "feat: complete Downloader Zone multi-platform app with live stats & EN/ID i18n"
 
-# 4. Ubah branch ke main
+# 4. Switch branch to main
 git branch -M main
 
-# 5. Tambahkan remote repository GitHub Anda
-git remote add origin https://github.com/USERNAME_ANDA/downloaderz.git
+# 5. Link your GitHub remote repository
+git remote add origin https://github.com/YOUR_USERNAME/downloaderz.git
 
-# 6. Push ke GitHub
+# 6. Push to GitHub
 git push -u origin main
 ```
 
 ---
 
-## 🙏 Kredit & Ucapan Terima Kasih (Thanks To)
+## 🙏 Credits & Acknowledgments (Thanks To)
 
-Proyek **Downloader Zone** dibangun menggunakan kombinasi custom code, library open-source terpercaya, serta layanan API publik dari komunitas developer. Terima kasih dan apresiasi sebesar-besarnya kami sampaikan kepada:
+The **Downloader Zone** project is powered by a combination of custom engineering, trusted open-source tools, and public community API services. We extend our gratitude and appreciation to:
 
-### 🌐 Media Resolver & Public APIs
-- **[TikWM](https://tikwm.com/)** – Layanan API publik tanpa watermark untuk ekstraksi video dan audio TikTok.
-- **[SnapSave Community](https://github.com/topics/snapsave)** & **`snapsave-media-downloader`** – Library resolver untuk decoding stream video Instagram Reels dan Facebook HD.
-- **[Pinterest Pidgets API](https://widgets.pinterest.com/)** – Public endpoint untuk metadata gambar dan resolusi asli Pinterest.
-- **[YouTube oEmbed & iFrame API](https://developers.google.com/youtube)** – Endpoint resmi oEmbed untuk parsing judul dan thumbnail video YouTube.
-- **[Spotify oEmbed](https://developer.spotify.com/documentation/embeds)** & **[SoundCloud oEmbed](https://developers.soundcloud.com/docs/api/reference#oembed)** – Layanan embed metadata musik dan album.
+### 🌐 Media Resolvers & Public APIs
+- **[TikWM](https://tikwm.com/)** – Public API for watermark-free TikTok video and audio extraction.
+- **[SnapSave Community](https://github.com/topics/snapsave)** & **`snapsave-media-downloader`** – Resolver algorithms for decoding Instagram Reels and Facebook HD video streams.
+- **[Pinterest Pidgets API](https://widgets.pinterest.com/)** – Public endpoint for retrieving original high-resolution Pinterest photos and metadata.
+- **[YouTube oEmbed & iFrame API](https://developers.google.com/youtube)** – Official oEmbed endpoints for YouTube title, duration, and thumbnail rendering.
+- **[Spotify oEmbed](https://developer.spotify.com/documentation/embeds)** & **[SoundCloud oEmbed](https://developers.soundcloud.com/docs/api/reference#oembed)** – High-fidelity music and album embed metadata services.
 
 ### 💻 Open Source Frameworks & Tools
-- **[React](https://react.dev/)** & **[Vite](https://vitejs.dev/)** – Pondasi frontend modern berkecepatan tinggi.
-- **[Tailwind CSS](https://tailwindcss.com/)** (v4) – Utility-first CSS framework untuk styling glassmorphism dark-mode yang elegan.
-- **[Lucide Icons](https://lucide.dev/)** – Koleksi icon open-source yang clean dan konsisten.
-- **[Express.js](https://expressjs.com/)** – Web framework Node.js untuk proxy stream download, bypass CORS, dan caching.
+- **[React 19](https://react.dev/)** & **[Vite](https://vitejs.dev/)** – Fast frontend framework and instantaneous dev server.
+- **[Tailwind CSS v4](https://tailwindcss.com/)** – Utility-first CSS framework providing responsive neon-dark glassmorphism styling.
+- **[Lucide Icons](https://lucide.dev/)** – Clean, modern icon suite.
+- **[Express.js](https://expressjs.com/)** – Node.js web server powering the proxy stream pipeline and bypassing CORS.
 
-### 🎨 Inspirasi Desain
-- **Zeta Download / Zetabot** (`zetabot.eu.cc`) – Referensi inspirasi UI layout modern, icon grid 20 platform, dan arsitektur form tempel link.
-- **6ickzone** – Branding, ide konsep, dan penyesuaian fungsionalitas Downloader Zone.
+### 🎨 Design & Direction Inspiration
+- **Zeta Download / Zetabot** (`zetabot.eu.cc`) – Layout inspiration for modern multi-platform icon tiles and clipboard paste flow.
+- **6ickzone** – Branding, product direction, and conceptualization.
 
 ---
 
-## 📄 Lisensi & Disclaimer
+## 📄 License & Disclaimer
 
-Proyek ini dibuat untuk tujuan edukasi, penelitian, dan penggunaan arsip pribadi. Pastikan Anda mematuhi kebijakan hak cipta serta ketentuan layanan dari masing-masing platform media sosial yang Anda unduh. Seluruh merk dagang, logo, dan konten adalah hak cipta dari masing-masing pemilik aslinya.
-
+This project is created for educational, research, and personal media archiving purposes. Please respect the copyright and Terms of Service of each social media platform. All trademarks, logos, and third-party media content belong to their respective copyright holders.
