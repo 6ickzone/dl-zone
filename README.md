@@ -90,10 +90,10 @@ This project comes with an optimized, lightweight production multi-stage `Docker
 
 ```bash
 # Build Docker image
-docker build -t downloaderz .
+docker build -t dl-zone .
 
 # Run container on port 8080
-docker run -p 8080:8080 downloaderz
+docker run -p 8080:8080 dl-zone
 ```
 Open your browser and visit `http://localhost:8080`.
 
@@ -108,7 +108,7 @@ Deploy directly to **Google Cloud Run** using the Google Cloud SDK (`gcloud`):
 gcloud config set project <YOUR_PROJECT_ID>
 
 # Deploy directly from the project directory to asia-southeast1 (Singapore)
-gcloud run deploy downloaderz \
+gcloud run deploy dl-zone \
   --source . \
   --region=asia-southeast1 \
   --allow-unauthenticated \
@@ -159,7 +159,7 @@ git commit -m "feat: complete Downloader Zone multi-platform app with live stats
 git branch -M main
 
 # 5. Link your GitHub remote repository
-git remote add origin https://github.com/YOUR_USERNAME/downloaderz.git
+git remote add origin https://github.com/6ickzone/dl-zone.git
 
 # 6. Push to GitHub
 git push -u origin main
