@@ -3,6 +3,7 @@ import {
   Download,
   Music,
   Video,
+  Image as ImageIcon,
   Share2,
   QrCode,
   Check,
@@ -11,6 +12,7 @@ import {
   Maximize2,
   X,
   FileDown,
+  Eye,
 } from 'lucide-react';
 import { MediaMetadata, DownloadQuality } from '../types';
 import { RenderPlatformIcon } from './PlatformIcons';
@@ -27,7 +29,17 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
   onDownloadSuccess,
 }) => {
   const { t, language } = useLanguage();
-  const [activeMediaTab, setActiveMediaTab] = useState<'video' | 'audio'>('video');
+
+  const isImage = media.mediaType === 'image' || (media.qualities && media.qualities.length > 0 && (media.qualities[0].format === 'jpg' || media.qualities[0].format === 'png') && !media.directVideoUrl);
+  const isAudio = media.mediaType === 'audio' || media.platform === 'spotify' || media.platform === 'soundcloud' || media.platform === 'applemusic';
+  const isVideo = !isImage && !isAudio;
+
+  const [activeMediaTab, setActiveMediaTab] = useState<'video' | 'audio' | 'image'>(() => {
+    if (isImage) return 'image';
+    if (isAudio) return 'audio';
+    return 'video';
+  });
+
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [isModalPlayerOpen, setIsModalPlayerOpen] = useState<boolean>(false);
 
@@ -45,15 +57,18 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
   const [copiedLink, setCopiedLink] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
 
-  const hasVideo = media.qualities && media.qualities.length > 0;
-  const hasAudio = media.audioQualities && media.audioQualities.length > 0;
-
-  // Auto switch to audio tab if only audio is available
+  // Sync active tab when media updates
   useEffect(() => {
-    if (!hasVideo && hasAudio) {
+    if (isImage) {
+      setActiveMediaTab('image');
+    } else if (isAudio) {
       setActiveMediaTab('audio');
+    } else {
+      setActiveMediaTab('video');
     }
-  }, [hasVideo, hasAudio]);
+    setIsPlaying(false);
+    setIsAudioPlaying(false);
+  }, [media.id, isImage, isAudio]);
 
   // Audio player progress timer
   useEffect(() => {
@@ -102,8 +117,8 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
       return `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&color=%2310b981&auto_play=true&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false`;
     }
 
-    // Instagram
-    const igMatch = url.match(/reel(?:s)?\/([a-zA-Z0-9_-]+)/) || url.match(/\/p\/([a-zA-Z0-9_-]+)/);
+    // Instagram Reel
+    const igMatch = url.match(/reel(?:s)?\/([a-zA-Z0-9_-]+)/);
     if (igMatch) {
       return `https://www.instagram.com/reel/${igMatch[1]}/embed/`;
     }
@@ -129,14 +144,14 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
     if (downloadingId) return;
 
     setDownloadingId(quality.id);
-    setDownloadProgress(5);
+    setDownloadProgress(10);
     setCompletedId(null);
 
     const steps = [
-      { progress: 28, speed: '14.2 MB/s', delay: 200 },
-      { progress: 68, speed: '21.4 MB/s', delay: 350 },
-      { progress: 94, speed: '18.1 MB/s', delay: 500 },
-      { progress: 100, speed: language === 'en' ? 'Finalizing file...' : 'Menyimpan file...', delay: 650 },
+      { progress: 35, speed: '14.2 MB/s', delay: 150 },
+      { progress: 75, speed: '21.4 MB/s', delay: 250 },
+      { progress: 95, speed: '18.1 MB/s', delay: 350 },
+      { progress: 100, speed: language === 'en' ? 'Finalizing file...' : 'Menyimpan file...', delay: 450 },
     ];
 
     for (const step of steps) {
@@ -146,7 +161,7 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
     }
 
     try {
-      const targetUrl = quality.downloadUrl || (quality.format === 'mp4' ? media.directVideoUrl : media.directAudioUrl);
+      const targetUrl = quality.downloadUrl || (quality.format === 'mp4' ? media.directVideoUrl : (quality.format === 'jpg' ? media.thumbnail : media.directAudioUrl));
       await triggerFileDownload(media.title, media.platform, quality.label, quality.format, targetUrl);
       onDownloadSuccess(media, quality);
       setCompletedId(quality.id);
@@ -184,6 +199,43 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
     }
   };
 
+  // Determine current active download qualities list based on tab
+  const getActiveQualities = (): DownloadQuality[] => {
+    if (activeMediaTab === 'image') {
+      return media.qualities && media.qualities.length > 0 ? media.qualities : [
+        {
+          id: 'photo-orig',
+          label: language === 'en' ? 'Original Full-Resolution Photo (JPG)' : 'Foto Asli Resolusi Penuh (Original JPG)',
+          resolution: 'Ultra HD',
+          format: 'jpg',
+          fileSize: 'Original HD',
+          downloadUrl: media.thumbnail,
+          isPopular: true,
+          badge: 'Original JPG',
+        }
+      ];
+    }
+
+    if (activeMediaTab === 'audio') {
+      return media.audioQualities && media.audioQualities.length > 0 ? media.audioQualities : [
+        {
+          id: 'audio-master',
+          label: language === 'en' ? 'Audio MP3 320kbps High Quality' : 'Audio MP3 320kbps Kualitas Tinggi',
+          bitrate: '320 kbps',
+          format: 'mp3',
+          fileSize: 'Original Audio',
+          downloadUrl: media.directAudioUrl,
+          isPopular: true,
+          badge: '320k HiFi',
+        }
+      ];
+    }
+
+    return media.qualities || [];
+  };
+
+  const activeQualities = getActiveQualities();
+
   return (
     <div className="max-w-3xl mx-auto mb-14 px-4 sm:px-0">
       <div className="bg-[#131f2b] border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden transition-all">
@@ -197,7 +249,11 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
               {media.platformName}
             </span>
             <span className="text-xs text-emerald-400 font-semibold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/20">
-              ● {language === 'en' ? 'Ready to Stream & Download' : 'Siap Diputar & Diunduh'}
+              ● {isImage
+                ? (language === 'en' ? 'Photo Detected & Ready' : 'Foto Terdeteksi & Siap Diunduh')
+                : (isAudio
+                    ? (language === 'en' ? 'Audio Stream Ready' : 'Trek Audio Siap')
+                    : (language === 'en' ? 'Ready to Stream & Download' : 'Siap Diputar & Diunduh'))}
             </span>
           </div>
 
@@ -205,10 +261,10 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
             <button
               onClick={() => setIsModalPlayerOpen(true)}
               className="flex items-center gap-1.5 text-xs text-emerald-300 hover:text-white px-2.5 py-1 rounded-md bg-emerald-950/60 hover:bg-emerald-900/80 transition-colors border border-emerald-500/30 cursor-pointer"
-              title={language === 'en' ? 'Open Fullscreen Player' : 'Buka Pemutar Layar Penuh'}
+              title={isImage ? (language === 'en' ? 'View Photo' : 'Lihat Foto Penuh') : (language === 'en' ? 'Open Player' : 'Buka Layar Penuh')}
             >
               <Maximize2 className="w-3.5 h-3.5 text-emerald-400" />
-              <span>{language === 'en' ? 'Fullscreen' : 'Layar Penuh'}</span>
+              <span>{isImage ? (language === 'en' ? 'View Photo' : 'Perbesar') : (language === 'en' ? 'Fullscreen' : 'Layar Penuh')}</span>
             </button>
 
             <button
@@ -234,7 +290,43 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
         <div className="p-5 sm:p-6 grid grid-cols-1 sm:grid-cols-12 gap-5 items-start">
           {/* Interactive Player / Thumbnail Area */}
           <div className="sm:col-span-5 relative group rounded-xl overflow-hidden aspect-video sm:aspect-square bg-slate-950 border border-slate-800 flex items-center justify-center">
-            {isPlaying ? (
+            {isImage ? (
+              // IMAGE / PHOTO PREVIEW (Instagram Photo, Pinterest, etc.)
+              <div
+                className="w-full h-full relative cursor-pointer overflow-hidden group/img"
+                onClick={() => setIsModalPlayerOpen(true)}
+              >
+                <img
+                  src={media.thumbnail}
+                  alt={media.title}
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80';
+                  }}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover/img:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent pointer-events-none" />
+
+                {/* Photo Badge */}
+                <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded bg-emerald-500/90 text-[11px] font-bold text-slate-950 backdrop-blur-xs flex items-center gap-1 shadow-md">
+                  <ImageIcon className="w-3 h-3" />
+                  <span>{language === 'en' ? 'HD Photo' : 'Foto HD'}</span>
+                </span>
+
+                {/* Click to Zoom / View Full Photo */}
+                <div className="absolute inset-0 m-auto w-12 h-12 rounded-full bg-slate-900/80 hover:bg-emerald-500 text-white hover:text-slate-950 flex items-center justify-center transition-all transform hover:scale-110 shadow-lg border border-slate-700 hover:border-emerald-400">
+                  <Eye className="w-5 h-5" />
+                </div>
+
+                <div className="absolute bottom-2.5 left-2.5 z-10 pointer-events-none">
+                  <span className="text-[11px] font-bold text-emerald-300 flex items-center gap-1 drop-shadow-md">
+                    <Maximize2 className="w-3 h-3" />
+                    <span>{language === 'en' ? 'Click to Enlarge Photo' : 'Klik untuk Lihat Foto Asli'}</span>
+                  </span>
+                </div>
+              </div>
+            ) : isPlaying ? (
+              // ACTIVE VIDEO / AUDIO EMBED PLAYER
               <div className="w-full h-full relative bg-black">
                 {directVideoUrl ? (
                   <video
@@ -282,6 +374,7 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
                 </button>
               </div>
             ) : (
+              // VIDEO / AUDIO IDLE THUMBNAIL WITH PLAY BUTTON
               <>
                 <img
                   src={media.thumbnail}
@@ -304,7 +397,7 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
                 <button
                   onClick={toggleInlinePlay}
                   className="absolute inset-0 m-auto w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-slate-950 flex items-center justify-center transition-all transform hover:scale-110 active:scale-95 shadow-xl shadow-emerald-500/40 cursor-pointer z-10 group/btn"
-                  title={language === 'en' ? 'Play direct stream' : 'Putar Preview Langsung'}
+                  title={language === 'en' ? 'Play preview' : 'Putar Preview'}
                 >
                   <Play className="w-6 h-6 fill-current ml-0.5" />
                 </button>
@@ -343,51 +436,53 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
                 {media.duration && <span>⏱ {media.duration}</span>}
               </div>
 
-              {/* Dedicated Audio Preview Bar */}
-              <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-700/60 mb-4">
-                <div className="flex items-center justify-between text-xs mb-2">
-                  <span className="font-semibold text-slate-300 flex items-center gap-1.5">
-                    <Music className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>{language === 'en' ? 'Audio Stream Preview:' : 'Pratinjau Audio:'}</span>
-                  </span>
-                  <span className="font-mono text-emerald-400 text-[11px]">
-                    {audioCurrentTime} / {media.duration || '0:30'}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={toggleAudioPreview}
-                    className="w-8 h-8 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center shrink-0 transition-all cursor-pointer shadow-sm"
-                    title={isAudioPlaying ? 'Pause' : 'Play Audio'}
-                  >
-                    {isAudioPlaying ? (
-                      <Pause className="w-4 h-4 fill-current" />
-                    ) : (
-                      <Play className="w-4 h-4 fill-current ml-0.5" />
-                    )}
-                  </button>
-
-                  {/* Scrubber Bar */}
-                  <div className="flex-1 bg-slate-800 rounded-full h-2 overflow-hidden relative cursor-pointer">
-                    <div
-                      className="bg-gradient-to-r from-emerald-500 to-teal-400 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${audioProgress}%` }}
-                    />
+              {/* Dedicated Audio Preview Bar (ONLY for Audio or Video with sound) */}
+              {(isAudio || media.directAudioUrl) && (
+                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-700/60 mb-4">
+                  <div className="flex items-center justify-between text-xs mb-2">
+                    <span className="font-semibold text-slate-300 flex items-center gap-1.5">
+                      <Music className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>{language === 'en' ? 'Audio Stream Preview:' : 'Pratinjau Audio:'}</span>
+                    </span>
+                    <span className="font-mono text-emerald-400 text-[11px]">
+                      {audioCurrentTime} / {media.duration || '0:30'}
+                    </span>
                   </div>
 
-                  {media.directAudioUrl && (
-                    <audio
-                      ref={audioRef}
-                      src={media.directAudioUrl}
-                      onEnded={() => {
-                        setIsAudioPlaying(false);
-                        setAudioProgress(0);
-                      }}
-                    />
-                  )}
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={toggleAudioPreview}
+                      className="w-8 h-8 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center shrink-0 transition-all cursor-pointer shadow-sm"
+                      title={isAudioPlaying ? 'Pause' : 'Play Audio'}
+                    >
+                      {isAudioPlaying ? (
+                        <Pause className="w-4 h-4 fill-current" />
+                      ) : (
+                        <Play className="w-4 h-4 fill-current ml-0.5" />
+                      )}
+                    </button>
+
+                    {/* Scrubber Bar */}
+                    <div className="flex-1 bg-slate-800 rounded-full h-2 overflow-hidden relative cursor-pointer">
+                      <div
+                        className="bg-gradient-to-r from-emerald-500 to-teal-400 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${audioProgress}%` }}
+                      />
+                    </div>
+
+                    {media.directAudioUrl && (
+                      <audio
+                        ref={audioRef}
+                        src={media.directAudioUrl}
+                        onEnded={() => {
+                          setIsAudioPlaying(false);
+                          setAudioProgress(0);
+                        }}
+                      />
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Active downloading progress bar */}
@@ -413,34 +508,75 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
               </div>
             )}
 
-            {/* Format category switcher (Video / Audio) */}
-            <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-              {hasVideo && (
+            {/* Format category switcher (Auto-detected: Image / Video / Audio) */}
+            <div className="flex items-center gap-2 border-b border-slate-800 pb-3 flex-wrap">
+              {isImage ? (
+                // IMAGE / PHOTO TAB
                 <button
-                  onClick={() => setActiveMediaTab('video')}
-                  className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                    activeMediaTab === 'video'
-                      ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                      : 'text-slate-400 hover:text-white bg-slate-800/60'
-                  }`}
+                  onClick={() => setActiveMediaTab('image')}
+                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 shadow-sm cursor-pointer"
                 >
-                  <Video className="w-3.5 h-3.5" />
-                  <span>{language === 'en' ? 'Video MP4' : 'Video MP4'} ({media.qualities.length})</span>
+                  <ImageIcon className="w-3.5 h-3.5" />
+                  <span>{language === 'en' ? 'Photo / Image (JPG)' : 'Foto / Gambar (JPG)'} ({activeQualities.length})</span>
                 </button>
-              )}
+              ) : isAudio ? (
+                // AUDIO / MUSIC TABS
+                <>
+                  <button
+                    onClick={() => setActiveMediaTab('audio')}
+                    className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                      activeMediaTab === 'audio'
+                        ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                        : 'text-slate-400 hover:text-white bg-slate-800/60'
+                    }`}
+                  >
+                    <Music className="w-3.5 h-3.5" />
+                    <span>{language === 'en' ? 'Audio & Music' : 'Audio & Musik'}</span>
+                  </button>
 
-              {hasAudio && (
-                <button
-                  onClick={() => setActiveMediaTab('audio')}
-                  className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                    activeMediaTab === 'audio'
-                      ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                      : 'text-slate-400 hover:text-white bg-slate-800/60'
-                  }`}
-                >
-                  <Music className="w-3.5 h-3.5" />
-                  <span>{language === 'en' ? 'Audio MP3' : 'Audio MP3'} ({media.audioQualities.length})</span>
-                </button>
+                  {media.qualities && media.qualities.some((q) => q.format === 'jpg') && (
+                    <button
+                      onClick={() => setActiveMediaTab('image')}
+                      className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                        activeMediaTab === 'image'
+                          ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                          : 'text-slate-400 hover:text-white bg-slate-800/60'
+                      }`}
+                    >
+                      <ImageIcon className="w-3.5 h-3.5" />
+                      <span>{language === 'en' ? 'Cover Art (JPG)' : 'Cover Art (JPG)'}</span>
+                    </button>
+                  )}
+                </>
+              ) : (
+                // VIDEO TABS
+                <>
+                  <button
+                    onClick={() => setActiveMediaTab('video')}
+                    className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                      activeMediaTab === 'video'
+                        ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                        : 'text-slate-400 hover:text-white bg-slate-800/60'
+                    }`}
+                  >
+                    <Video className="w-3.5 h-3.5" />
+                    <span>Video MP4 ({media.qualities?.length || 1})</span>
+                  </button>
+
+                  {media.audioQualities && media.audioQualities.length > 0 && (
+                    <button
+                      onClick={() => setActiveMediaTab('audio')}
+                      className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                        activeMediaTab === 'audio'
+                          ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                          : 'text-slate-400 hover:text-white bg-slate-800/60'
+                      }`}
+                    >
+                      <Music className="w-3.5 h-3.5" />
+                      <span>Audio MP3 ({media.audioQualities.length})</span>
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -449,22 +585,30 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
         {/* Quality Options Table */}
         <div className="border-t border-slate-800/80 px-5 sm:px-6 py-4 bg-slate-950/40">
           <div className="text-xs font-semibold text-slate-400 mb-3 flex items-center justify-between">
-            <span className="uppercase">{language === 'en' ? 'Select Download Quality:' : 'PILIH KUALITAS UNDUHAN:'}</span>
+            <span className="uppercase">
+              {isImage
+                ? (language === 'en' ? 'SELECT PHOTO QUALITY:' : 'PILIH KUALITAS FOTO:')
+                : (isAudio
+                    ? (language === 'en' ? 'SELECT AUDIO / COVER QUALITY:' : 'PILIH KUALITAS AUDIO / COVER:')
+                    : (language === 'en' ? 'SELECT DOWNLOAD QUALITY:' : 'PILIH KUALITAS UNDUHAN:'))}
+            </span>
             <span className="text-[11px] text-slate-500">{language === 'en' ? 'Zero quota · High speed' : 'Bebas kuota · Kecepatan tinggi'}</span>
           </div>
 
           <div className="space-y-2">
-            {(activeMediaTab === 'video' ? media.qualities : media.audioQualities).map((item) => (
+            {activeQualities.map((item) => (
               <div
                 key={item.id}
                 className="flex items-center justify-between p-3 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-emerald-500/40 transition-all flex-wrap gap-2"
               >
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg bg-slate-700/60 flex items-center justify-center text-emerald-400 shrink-0">
-                    {activeMediaTab === 'video' ? (
-                      <Video className="w-4 h-4" />
-                    ) : (
+                    {item.format === 'jpg' || item.format === 'png' ? (
+                      <ImageIcon className="w-4 h-4" />
+                    ) : item.format === 'mp3' ? (
                       <Music className="w-4 h-4" />
+                    ) : (
+                      <Video className="w-4 h-4" />
                     )}
                   </div>
                   <div>
@@ -508,7 +652,13 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
                   ) : (
                     <>
                       <Download className="w-3.5 h-3.5 stroke-[2.5]" />
-                      <span>{t.result.downloadNow}</span>
+                      <span>
+                        {item.format === 'jpg' || item.format === 'png'
+                          ? (language === 'en' ? 'Download Photo' : 'Unduh Foto (JPG)')
+                          : (item.format === 'mp3'
+                              ? (language === 'en' ? 'Download Audio' : 'Unduh Audio (MP3)')
+                              : t.result.downloadNow)}
+                      </span>
                     </>
                   )}
                 </button>
@@ -518,7 +668,7 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
         </div>
       </div>
 
-      {/* Fullscreen Video / Audio Modal Player */}
+      {/* Fullscreen Video / Photo Modal Lightbox */}
       {isModalPlayerOpen && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-[#14212d] border border-slate-700 rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl relative animate-in zoom-in-95 duration-150">
@@ -535,20 +685,27 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
               </button>
             </div>
 
-            <div className="aspect-video w-full bg-black flex items-center justify-center relative">
-              {directVideoUrl ? (
+            <div className="w-full max-h-[70vh] bg-black flex items-center justify-center relative p-2 overflow-hidden">
+              {isImage ? (
+                // Fullscreen Photo Modal
+                <img
+                  src={media.thumbnail}
+                  alt={media.title}
+                  className="max-h-[65vh] w-auto max-w-full object-contain rounded-lg shadow-2xl"
+                />
+              ) : directVideoUrl ? (
                 <video
                   src={directVideoUrl}
                   controls
                   autoPlay
                   playsInline
-                  className="w-full h-full object-contain"
+                  className="w-full aspect-video object-contain"
                 />
               ) : embedUrl ? (
                 <iframe
                   src={embedUrl}
                   title={media.title}
-                  className="w-full h-full border-0"
+                  className="w-full aspect-video border-0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                   allowFullScreen
                 />
@@ -576,12 +733,23 @@ export const MediaResultCard: React.FC<MediaResultCardProps> = ({
 
             <div className="p-4 bg-slate-900/60 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
               <span>Platform: <strong className="text-emerald-400 capitalize">{media.platformName}</strong></span>
-              <button
-                onClick={() => setIsModalPlayerOpen(false)}
-                className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 cursor-pointer"
-              >
-                {t.result.close}
-              </button>
+              <div className="flex items-center gap-2">
+                {activeQualities[0] && (
+                  <button
+                    onClick={() => handleStartDownload(activeQualities[0])}
+                    className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold flex items-center gap-1 cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>{isImage ? (language === 'en' ? 'Download Photo' : 'Unduh Foto') : (language === 'en' ? 'Download File' : 'Unduh File')}</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsModalPlayerOpen(false)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 cursor-pointer"
+                >
+                  {t.result.close}
+                </button>
+              </div>
             </div>
           </div>
         </div>

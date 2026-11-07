@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
+    "@jerrycoder/instagram-api": "^2.5.9",
     "@mrnima/facebook-downloader": "^1.0.0",
     "@mrnima/instagram-downloader": "^1.0.0",
     "@renpwn/fb-downloader": "^1.0.16",
@@ -20,6 +21,7 @@
     "@tailwindcss/vite": "^4.3.3",
     "@vitejs/plugin-react": "^6.1.1",
     "btch-downloader": "^6.4.0",
+    "cakkatrok-instagram-downloader": "^2.0.2",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
     "instagram-url-direct": "^2.0.7",

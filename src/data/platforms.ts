@@ -133,7 +133,7 @@ export const SUPPORTED_PLATFORMS: PlatformInfo[] = [
     description: 'Unduh lagu indie, remix DJ, dan podcast SoundCloud kualitas tinggi.',
     supportedFormats: ['Audio MP3 320kbps', 'Audio Original Track'],
     urlPattern: /(soundcloud\.com)/i,
-    sampleUrl: 'https://soundcloud.com/alanwalker/alan-walker-faded',
+    sampleUrl: 'https://soundcloud.com/alanwalker/faded',
     iconName: 'soundcloud'
   },
   {
@@ -148,7 +148,7 @@ export const SUPPORTED_PLATFORMS: PlatformInfo[] = [
     description: 'Dapatkan audio trek, lagu populer, dan cover resolusi tinggi.',
     supportedFormats: ['Audio AAC / MP3', 'Cover Art Ultra HD'],
     urlPattern: /(music\.apple\.com)/i,
-    sampleUrl: 'https://music.apple.com/id/album/komang/1689001122',
+    sampleUrl: 'https://music.apple.com/us/album/thriller/269572838',
     iconName: 'applemusic'
   },
   {

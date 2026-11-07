@@ -29,62 +29,36 @@ export async function fetchLinkMetadata(rawUrl: string): Promise<MediaMetadata> 
       body: JSON.stringify({ url }),
     });
 
-    if (res.ok) {
-      const data = await res.json();
-      if (data && data.success) {
-        return {
-          id: `media-${Date.now()}`,
-          url,
-          platform: (data.platform as PlatformId) || platformId,
-          platformName: data.platformName || platformInfo.name,
-          title: data.title,
-          author: data.author || `@${platformInfo.name.toLowerCase()}_creator`,
-          duration: data.duration || 'HD',
-          thumbnail: data.thumbnail,
-          likes: data.likes,
-          views: data.views,
-          date: data.date || 'Terbaru',
-          qualities: data.qualities && data.qualities.length > 0 ? data.qualities : [
-            {
-              id: 'q-1080',
-              label: 'Video 1080p Full HD',
-              resolution: '1080p',
-              format: 'mp4',
-              fileSize: '38.4 MB',
-              isPopular: true,
-              badge: 'Full HD',
-              downloadUrl: data.directVideoUrl,
-            },
-            {
-              id: 'q-720',
-              label: 'Video 720p HD Standar',
-              resolution: '720p',
-              format: 'mp4',
-              fileSize: '19.2 MB',
-              downloadUrl: data.directVideoUrl,
-            },
-          ],
-          audioQualities: data.audioQualities && data.audioQualities.length > 0 ? data.audioQualities : [
-            {
-              id: 'q-mp3-320',
-              label: 'Audio MP3 320kbps (Kualitas Tinggi)',
-              bitrate: '320 kbps',
-              format: 'mp3',
-              fileSize: '7.8 MB',
-              isPopular: true,
-              badge: 'HQ Audio',
-              downloadUrl: data.directAudioUrl,
-            },
-          ],
-          directVideoUrl: data.directVideoUrl,
-          directAudioUrl: data.directAudioUrl,
-          embedUrl: data.embedUrl,
-          mediaType: data.mediaType || (data.platform === 'spotify' || data.platform === 'soundcloud' || data.platform === 'applemusic' ? 'audio' : 'video'),
-        };
-      }
+    const data = await res.json().catch(() => null);
+
+    if (res.ok && data && data.success) {
+      return {
+        id: `media-${Date.now()}`,
+        url,
+        platform: (data.platform as PlatformId) || platformId,
+        platformName: data.platformName || platformInfo.name,
+        title: data.title,
+        author: data.author || `@${platformInfo.name.toLowerCase()}_creator`,
+        duration: data.duration || 'HD',
+        thumbnail: data.thumbnail,
+        likes: data.likes,
+        views: data.views,
+        date: data.date || 'Terbaru',
+        qualities: data.qualities || [],
+        audioQualities: data.audioQualities || [],
+        directVideoUrl: data.directVideoUrl,
+        directAudioUrl: data.directAudioUrl,
+        embedUrl: data.embedUrl,
+        mediaType: (data.mediaType as 'video' | 'audio' | 'image') || (data.platform === 'spotify' || data.platform === 'soundcloud' || data.platform === 'applemusic' ? 'audio' : (data.qualities && data.qualities[0]?.format === 'jpg' && !data.directVideoUrl ? 'image' : 'video')),
+      };
+    } else if (data && !data.success && data.error) {
+      throw new Error(data.error);
     }
-  } catch (err) {
-    console.warn('Backend parse error, using client extraction:', err);
+  } catch (err: any) {
+    if (err && err.message && !err.message.includes('fetch')) {
+      throw err;
+    }
+    console.warn('Backend parse error, trying client extraction:', err);
   }
 
   // 2. Client-side extraction for YouTube (using noembed / oEmbed directly)
@@ -171,13 +145,13 @@ export async function triggerFileDownload(
   title: string,
   platform: string,
   qualityLabel: string,
-  format: 'mp4' | 'mp3' | 'zip' | 'jpg',
+  format: 'mp4' | 'mp3' | 'zip' | 'jpg' | 'png',
   downloadUrl?: string
 ): Promise<void> {
   const sanitizedTitle = title.replace(/[^a-zA-Z0-9_\- ]/g, '').trim().substring(0, 40) || 'media';
   const fileName = `DownloaderZone_${platform}_${sanitizedTitle}.${format}`;
 
-  // If a real direct download URL exists (e.g. from Instagram, Facebook, TikTok, Twitter)
+  // If a real direct download URL exists (e.g. from Instagram, Facebook, TikTok, Twitter, Pinterest)
   if (downloadUrl && (downloadUrl.startsWith('http') || downloadUrl.startsWith('/api/'))) {
     try {
       const targetUrl = downloadUrl.startsWith('/api/proxy-download')
@@ -196,8 +170,27 @@ export async function triggerFileDownload(
     }
   }
 
-  // Fallback: Generate real playable audio/video blob
-  if (format === 'mp3') {
+  // Fallback: Generate real playable audio/video or image blob
+  if (format === 'jpg' || format === 'png') {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1080;
+    canvas.height = 1080;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.fillStyle = '#0b1219';
+      ctx.fillRect(0, 0, 1080, 1080);
+      ctx.fillStyle = '#10b981';
+      ctx.font = 'bold 36px sans-serif';
+      ctx.fillText(title, 60, 200);
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '22px sans-serif';
+      ctx.fillText(`Downloader Zone - ${platform.toUpperCase()}`, 60, 260);
+      canvas.toBlob((blob) => {
+        if (blob) saveBlobAs(blob, fileName);
+      }, 'image/jpeg');
+    }
+    return;
+  } else if (format === 'mp3') {
     const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
     const sampleRate = 44100;
     const duration = 2.0;

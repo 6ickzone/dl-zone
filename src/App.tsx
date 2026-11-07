@@ -89,9 +89,9 @@ function MainApp() {
           behavior: 'smooth',
         });
       }, 100);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      showToast(t.hero.fetchError);
+      showToast(err?.message || t.hero.fetchError);
     } finally {
       setIsLoading(false);
     }

@@ -38,7 +38,7 @@ export interface DownloadQuality {
   label: string;
   resolution?: string;
   bitrate?: string;
-  format: 'mp4' | 'mp3' | 'zip' | 'jpg';
+  format: 'mp4' | 'mp3' | 'zip' | 'jpg' | 'png';
   fileSize: string;
   badge?: string;
   isPopular?: boolean;
@@ -64,7 +64,7 @@ export interface MediaMetadata {
   directVideoUrl?: string;
   directAudioUrl?: string;
   embedUrl?: string;
-  mediaType?: 'video' | 'audio';
+  mediaType?: 'video' | 'audio' | 'image';
 }
 
 export interface SearchSongItem {
