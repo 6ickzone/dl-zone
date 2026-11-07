@@ -1,14 +1,28 @@
-# ⚡ Downloader Zone
+<div align="center">
 
-> **Download Videos&Music**  
-> All-in-one multi-platform downloader for watermark-free videos, photos, music, and reels from 17 popular platforms at ultra-high speeds — free forever, without ads.
+<h1>⚡ dl-zone</h1>
 
+[![Status: Beta](https://img.shields.io/badge/STATUS-BETA%20%2F%20WIP-cyan?style=for-the-badge&logo=codeforces&logoColor=black)](https://github.com/6ickzone/dl-zone)
+[![License](https://img.shields.io/badge/LICENSE-MIT-blue?style=for-the-badge)](https://github.com/6ickzone/dl-zone/blob/main/LICENSE)
+[![Contributions: Welcome](https://img.shields.io/badge/CONTRIBUTIONS-WELCOME-magenta?style=for-the-badge&logo=git&logoColor=white)](https://github.com/6ickzone/dl-zone/pulls)
 [![React](https://img.shields.io/badge/Frontend-React_19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/Language-TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Styling-Tailwind_CSS_v4-38B2AC?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![Express](https://img.shields.io/badge/Backend-Express.js-000000?logo=express&logoColor=white)](https://expressjs.com/)
 [![Docker](https://img.shields.io/badge/Deploy-Docker-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 [![Google Cloud Run](https://img.shields.io/badge/Cloud-Google_Cloud_Run-4285F4?logo=googlecloud&logoColor=white)](https://cloud.google.com/run)
+
+**Advanced Web Downloader & Pipeline Media Engine**
+
+</div>
+
+---
+
+> ⚠️ **Notice:** This project is currently under active development (**Beta / Work in Progress**). Download pipelines, proxy systems, and conversion modules are being refactored regularly. If you encounter bugs, broken streams, or want to help fix issues related to corrupted files, **Pull Requests** and **Issues** are warmly welcomed!
+
+---
+
+> All-in-one multi-platform downloader for watermark-free videos, photos, music, and reels from 17 popular platforms at ultra-high speeds — free forever, without ads.
 
 ---
 
