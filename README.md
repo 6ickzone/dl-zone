@@ -47,8 +47,8 @@
 
 ### 1. Clone Repository
 ```bash
-git clone https://github.com/YOUR_USERNAME/downloaderz.git
-cd downloaderz
+git clone https://github.com/6ickzone/dl-zone.git
+cd dl-zone
 ```
 
 ### 2. Install Dependencies
@@ -153,7 +153,7 @@ git push -u origin main
 
 ---
 
-## 🙏 Credits & Acknowledgments (Thanks To)
+## 🙏 Credits & Acknowledgments
 
 The **Downloader Zone** project is powered by a combination of custom engineering, trusted open-source tools, and public community API services. We extend our gratitude and appreciation to:
 
@@ -169,10 +169,6 @@ The **Downloader Zone** project is powered by a combination of custom engineerin
 - **[Tailwind CSS v4](https://tailwindcss.com/)** – Utility-first CSS framework providing responsive neon-dark glassmorphism styling.
 - **[Lucide Icons](https://lucide.dev/)** – Clean, modern icon suite.
 - **[Express.js](https://expressjs.com/)** – Node.js web server powering the proxy stream pipeline and bypassing CORS.
-
-### 🎨 Design & Direction Inspiration
-- **Zeta Download / Zetabot** (`zetabot.eu.cc`) – Layout inspiration for modern multi-platform icon tiles and clipboard paste flow.
-- **6ickzone** – Branding, product direction, and conceptualization.
 
 ---
 
