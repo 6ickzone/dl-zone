@@ -1,6 +1,6 @@
 {
-  "name": "Downloader zone",
-  "description": "Download Video, Musik & File Cukup Tempel Link dari 20+ platform populer tanpa ribet.",
+  "name": "Downloader Zone",
+  "description": "Unduh file asli dari tautan publik TikTok, Instagram, Facebook, X, Pinterest, YouTube, dan Twitch, termasuk konversi MP3 dengan ffmpeg.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": []
 }

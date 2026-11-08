@@ -1,5 +1,5 @@
-import React from 'react';
-import { X, Trash2, Download, History, FileVideo, Music } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Trash2, Download, History, FileVideo, Music, AlertCircle, Loader2 } from 'lucide-react';
 import { DownloadHistoryItem } from '../types';
 import { triggerFileDownload } from '../utils/downloader';
 import { useLanguage } from '../context/LanguageContext';
@@ -17,16 +17,29 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
   history,
   onClearHistory,
 }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
   if (!isOpen) return null;
 
-  const handleReDownload = (item: DownloadHistoryItem) => {
-    triggerFileDownload(
-      item.title,
-      item.platform,
-      item.quality,
-      item.format as 'mp4' | 'mp3' | 'zip' | 'jpg'
-    );
+  const handleReDownload = async (item: DownloadHistoryItem) => {
+    if (pendingId) return;
+    setPendingId(item.id);
+    setError(null);
+    try {
+      await triggerFileDownload(item.title, item.platform, item.quality, item.format, item.downloadUrl);
+    } catch (err) {
+      setError(
+        err instanceof Error && err.message
+          ? err.message
+          : language === 'en'
+            ? 'The source link has expired. Process the original link again.'
+            : 'Tautan sumber sudah kedaluwarsa. Proses ulang tautan aslinya.'
+      );
+    } finally {
+      setPendingId(null);
+    }
   };
 
   return (
@@ -45,6 +58,16 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
             <X className="w-4 h-4" />
           </button>
         </div>
+
+        {error && (
+          <div className="mt-4 p-3 rounded-xl bg-red-950/50 border border-red-500/40 flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+            <p className="text-xs text-red-200 leading-relaxed flex-1">{error}</p>
+            <button onClick={() => setError(null)} className="text-red-300 hover:text-white cursor-pointer">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
         {/* Content list */}
         <div className="overflow-y-auto py-4 flex-1 space-y-2.5">
@@ -83,10 +106,15 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
 
                 <button
                   onClick={() => handleReDownload(item)}
-                  className="p-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 shrink-0 transition-colors cursor-pointer"
+                  disabled={pendingId !== null}
+                  className="p-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 shrink-0 transition-colors cursor-pointer disabled:opacity-50"
                   title={t.history.reDownload}
                 >
-                  <Download className="w-4 h-4" />
+                  {pendingId === item.id ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Download className="w-4 h-4" />
+                  )}
                 </button>
               </div>
             ))

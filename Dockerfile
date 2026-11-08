@@ -1,43 +1,27 @@
-# Multi-stage Dockerfile for Cloud Run
-FROM node:20-slim AS builder
+# Production image for Downloader Zone (Express + Vite build)
+FROM oven/bun:1 AS builder
 
 WORKDIR /app
 
-# Copy dependency manifests
-COPY package*.json ./
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
-# Install all dependencies (including devDependencies needed for build)
-RUN npm ci
-
-# Copy application source code
 COPY . .
+RUN bun run build
 
-# Build the frontend production bundle (outputs to /app/dist)
-RUN npm run build
-
-# Production runner stage
-FROM node:20-slim
+FROM oven/bun:1 AS runner
 
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=8080
 
-# Copy dependency manifests
-COPY package*.json ./
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile --production
 
-# Install only production dependencies
-RUN npm ci --omit=dev
-
-# Copy compiled frontend dist from builder
 COPY --from=builder /app/dist ./dist
+COPY server.ts tsconfig.json ./
 
-# Copy server and config
-COPY server.ts ./
-COPY tsconfig.json ./
-
-# Expose standard Cloud Run port
 EXPOSE 8080
 
-# Start production server
-CMD ["npx", "tsx", "server.ts"]
+CMD ["bun", "start"]

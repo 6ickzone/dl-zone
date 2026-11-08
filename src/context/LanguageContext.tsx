@@ -18,7 +18,6 @@ interface Translations {
     pasteBtn: string;
     downloadBtn: string;
     detectedPlatform: string;
-    sampleLinksLabel: string;
     clipboardError: string;
     emptyInputError: string;
     fetchError: string;
@@ -49,7 +48,7 @@ interface Translations {
     catAll: string;
     catShort: string;
     catVideo: string;
-    catAudio: string;
+    catImage: string;
     trySample: string;
     supportedFormats: string;
     close: string;
@@ -107,12 +106,11 @@ const translations: Record<Language, Translations> = {
       badge: 'Downloader',
       headline: 'Download Videos&Music',
       subtitle:
-        'Supports 17 platforms. Automatically detected from URL, instant high-speed processing, no watermark.',
-      placeholder: 'Paste video, music, or reel link here (TikTok, Instagram, FB, YouTube, Spotify, etc.)...',
+        'Paste a public link from TikTok, Instagram, Facebook, X, Pinterest, YouTube, or Twitch. Files are fetched from the source; MP3 is converted with ffmpeg.',
+      placeholder: 'Paste a public TikTok, Instagram, Facebook, X, Pinterest, YouTube, or Twitch link...',
       pasteBtn: 'Paste',
       downloadBtn: 'Download',
       detectedPlatform: 'Detected platform',
-      sampleLinksLabel: 'Sample links:',
       clipboardError: 'Clipboard permission denied. Please paste manually.',
       emptyInputError: 'Please paste a valid video or audio link first.',
       fetchError: 'Failed to process link. Please ensure the post is public and valid.',
@@ -138,12 +136,12 @@ const translations: Record<Language, Translations> = {
       recommended: 'Popular',
     },
     platforms: {
-      heading: '17 Supported Platforms',
-      subtitle: 'All-in-one downloader — paste link, choose resolution, and download with ease.',
-      catAll: 'All (17)',
+      heading: 'Supported Platforms',
+      subtitle: 'Only platforms with tested, working resolvers. Every listed file comes from the source link you provide.',
+      catAll: 'All',
       catShort: 'Shorts & Reels',
-      catVideo: 'HD & 4K Video',
-      catAudio: 'Music & Audio',
+      catVideo: 'Video',
+      catImage: 'Photo',
       trySample: 'Try Sample Link',
       supportedFormats: 'Supported Formats',
       close: 'Close',
@@ -154,11 +152,11 @@ const translations: Record<Language, Translations> = {
       items: [
         {
           q: 'Which platforms are supported?',
-          a: 'Downloader Zone supports 17 top video and music platforms, including TikTok (watermark-free HD & audio), YouTube (video up to 4K & MP3 320kbps), Instagram (Reels, Stories, Feed photos, and Carousel albums), Facebook (HD videos & Reels), Twitter / X, Threads, Pinterest (original high-res JPG), Spotify, SoundCloud, Apple Music, CapCut, Douyin, Reddit, Bilibili, Vimeo, Twitch, and SnackVideo.',
+          a: 'Direct downloads are supported for public TikTok, Instagram, Facebook, X, Pinterest, YouTube, and Twitch clips. YouTube videos are merged from their original video and audio streams up to 1080p. Spotify and Apple Music still return original cover art only because their audio is DRM-protected; SoundCloud and Vimeo require HLS/DASH access and are not advertised as download sources.',
         },
         {
           q: 'How do I download media?',
-          a: 'It takes 3 simple steps: (1) Copy the link of any public video, reel, or song from your favorite app. (2) Paste the link into the input field above and hit the download button. (3) Choose your preferred quality (e.g. 1080p Full HD or 320kbps MP3) and click "Download Now". Your file starts downloading immediately.',
+          a: 'Copy the link of a public post, paste it into the field above, press the download button, then choose a real file option. TikTok, Instagram, Facebook, X, YouTube, and Twitch media can also be converted to a real MP3 by ffmpeg. The server checks the source before the browser saves anything.',
         },
         {
           q: 'How do I copy links from Instagram, TikTok, or Facebook?',
@@ -166,7 +164,7 @@ const translations: Record<Language, Translations> = {
         },
         {
           q: 'Why did my download fail or show an error?',
-          a: 'Make sure the media is set to Public (not Private or restricted to followers). If the link was copied from a browser, ensure the full URL is included. Our system also automatically switches to fallback resolver servers if a primary API is temporarily rate-limited.',
+          a: 'Make sure the post is public and the link is still active. Signed CDN links expire, and private accounts cannot be read. The app shows the exact source error instead of saving a broken file; re-process the original link to get fresh URLs.'
         },
         {
           q: 'Is Downloader Zone legal to use?',
@@ -174,7 +172,7 @@ const translations: Record<Language, Translations> = {
         },
         {
           q: 'Is this service free with any limits?',
-          a: 'Yes, Downloader Zone is 100% free forever. No account registration, no credit card, and no daily download limits. You can download as many files as you need at full server CDN speeds.',
+          a: 'Yes. There is no account registration and no download counter. The only limits come from the source platform: private posts, expired links, and DRM-protected music cannot be downloaded.',
         },
         {
           q: 'Where are files saved on my device?',
@@ -210,7 +208,7 @@ const translations: Record<Language, Translations> = {
       copyright: '© 2026 Downloader Zone. All rights reserved. | Powered by 6ickzone',
       disclaimer:
         'Downloader Zone is a media downloading utility for personal archiving and educational purposes. We do not host or store videos or music on our servers.',
-      fastCdn: 'Fast CDN Servers',
+      fastCdn: 'Direct source streaming',
       download: 'Download',
       platforms: 'Platforms',
       faq: 'FAQ',
@@ -229,12 +227,11 @@ const translations: Record<Language, Translations> = {
       badge: 'Downloader',
       headline: 'Download Videos&Music',
       subtitle:
-        'Mendukung 17 platform. Dikenali otomatis dari tautan, pemrosesan cepat tanpa watermark dan tanpa registrasi.',
-      placeholder: 'Paste link di sini (TikTok, Instagram, FB, YouTube, Spotify, dll)...',
+        'Tempel tautan publik dari TikTok, Instagram, Facebook, X, Pinterest, YouTube, atau Twitch. File diambil dari sumbernya; MP3 dikonversi dengan ffmpeg.',
+      placeholder: 'Tempel tautan publik TikTok, Instagram, Facebook, X, Pinterest, YouTube, atau Twitch...',
       pasteBtn: 'Paste',
       downloadBtn: 'Download',
       detectedPlatform: 'Platform terdeteksi',
-      sampleLinksLabel: 'Contoh link:',
       clipboardError: 'Izin clipboard tidak tersedia. Silakan tempel manual.',
       emptyInputError: 'Silakan tempel tautan video atau audio terlebih dahulu.',
       fetchError: 'Gagal memproses tautan. Pastikan konten bersifat publik dan tautan valid.',
@@ -260,12 +257,12 @@ const translations: Record<Language, Translations> = {
       recommended: 'Populer',
     },
     platforms: {
-      heading: '17 Platform yang Didukung',
-      subtitle: 'Semua dalam satu tempat — tempel link, pilih kualitas, lalu download dengan praktis.',
-      catAll: 'Semua (17)',
+      heading: 'Platform yang Didukung',
+      subtitle: 'Hanya platform dengan resolver yang sudah diuji. Setiap file berasal dari tautan yang Anda berikan.',
+      catAll: 'Semua',
       catShort: 'Shorts & Reels',
-      catVideo: 'Video HD & 4K',
-      catAudio: 'Musik & Audio',
+      catVideo: 'Video',
+      catImage: 'Foto',
       trySample: 'Coba Contoh Link',
       supportedFormats: 'Format yang Didukung',
       close: 'Tutup',
@@ -276,11 +273,11 @@ const translations: Record<Language, Translations> = {
       items: [
         {
           q: 'Platform apa saja yang didukung?',
-          a: 'Downloader Zone mendukung 17 platform video dan musik populer di dunia, termasuk TikTok (tanpa watermark), YouTube (video 4K hingga MP3), Instagram (Reels, Story, Feed, Carousel), Facebook (video HD & Reels), X / Twitter, Threads, Pinterest (resolusi original JPG), Spotify, SoundCloud, Apple Music, CapCut, Douyin, Reddit, Bilibili, Vimeo, Twitch, dan SnackVideo.',
+          a: 'Unduhan langsung didukung untuk tautan publik TikTok, Instagram, Facebook, X, Pinterest, YouTube, dan klip Twitch. Video YouTube digabung dari stream video dan audio aslinya hingga 1080p. Spotify dan Apple Music hanya mengembalikan cover art karena audionya ber-DRM; SoundCloud dan Vimeo memerlukan akses HLS/DASH sehingga tidak ditampilkan sebagai sumber unduhan.',
         },
         {
           q: 'Bagaimana cara download?',
-          a: 'Sangat mudah: (1) Salin URL atau link dari video/musik di aplikasi media sosial yang ingin Anda unduh, (2) Tempel link pada kotak input di atas lalu tekan tombol unduh, (3) Pilih kualitas video atau audio yang diinginkan (misal: 1080p Full HD atau MP3 320kbps), lalu klik "Unduh Sekarang". File langsung tersimpan di perangkat Anda.',
+          a: 'Salin tautan postingan publik, tempel di kolom atas, tekan tombol unduh, lalu pilih file yang tersedia. Video TikTok, Instagram, Facebook, X, YouTube, dan Twitch juga bisa dikonversi menjadi MP3 asli oleh ffmpeg. Server memeriksa sumbernya sebelum browser menyimpan file.',
         },
         {
           q: 'Bagaimana cara menyalin link dari Instagram, TikTok, atau Facebook?',
@@ -288,7 +285,7 @@ const translations: Record<Language, Translations> = {
         },
         {
           q: 'Download gagal atau link tidak jalan?',
-          a: 'Pastikan akun pemilik video tidak dikunci (Private) dan konten dapat diakses publik. Sistem kami juga dilengkapi auto-fallback ke server resolver cadangan jika salah satu API sedang padat.',
+          a: 'Pastikan postingan publik dan tautannya masih aktif. Tautan CDN yang ditandatangani bisa kedaluwarsa, dan akun privat tidak bisa dibaca. Aplikasi menampilkan error dari sumber, bukan menyimpan file rusak; proses ulang tautan asli untuk mendapatkan URL baru.'
         },
         {
           q: 'Apakah legal?',
@@ -296,7 +293,7 @@ const translations: Record<Language, Translations> = {
         },
         {
           q: 'Apakah layanan ini gratis dan ada batasan?',
-          a: 'Ya, Downloader Zone 100% gratis tanpa biaya, tanpa perlu daftar akun, dan tanpa batasan jumlah unduhan harian.',
+          a: 'Ya. Tidak perlu daftar akun dan tidak ada penghitung unduhan. Batasan hanya datang dari platform sumber: postingan privat, tautan kedaluwarsa, dan musik ber-DRM tidak bisa diunduh.',
         },
         {
           q: 'Di mana file tersimpan setelah download?',
@@ -332,7 +329,7 @@ const translations: Record<Language, Translations> = {
       copyright: '© 2026 Downloader Zone. All rights reserved. | Powered by 6ickzone',
       disclaimer:
         'Downloader Zone adalah alat bantu pengunduhan konten publik untuk keperluan arsip pribadi dan edukasi. Kami tidak menyimpan video atau musik di server kami.',
-      fastCdn: 'Server CDN Cepat',
+      fastCdn: 'Streaming dari sumber asli',
       download: 'Download',
       platforms: 'Platform',
       faq: 'FAQ',

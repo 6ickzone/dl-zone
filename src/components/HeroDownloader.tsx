@@ -6,7 +6,7 @@ import {
   X,
   CloudDownload,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react';
 import { RenderPlatformIcon } from './PlatformIcons';
 import { SUPPORTED_PLATFORMS } from '../data/platforms';
@@ -17,7 +17,6 @@ interface HeroDownloaderProps {
   onUrlChange: (value: string) => void;
   onSubmit: (e?: React.FormEvent) => void;
   isLoading: boolean;
-  onSelectSample: (url: string) => void;
   onScrollToPlatforms: () => void;
   detectedPlatformName?: string | null;
 }
@@ -27,11 +26,10 @@ export const HeroDownloader: React.FC<HeroDownloaderProps> = ({
   onUrlChange,
   onSubmit,
   isLoading,
-  onSelectSample,
   onScrollToPlatforms,
   detectedPlatformName,
 }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [pasteError, setPasteError] = useState<string | null>(null);
 
   const handlePaste = async () => {
@@ -47,68 +45,37 @@ export const HeroDownloader: React.FC<HeroDownloaderProps> = ({
     }
   };
 
-  const handleClear = () => {
-    onUrlChange('');
-  };
-
-  const sampleLinks = [
-    { label: 'TikTok', url: 'https://vt.tiktok.com/ZSgqXyE7R/' },
-    { label: 'Instagram Reel', url: 'https://www.instagram.com/reel/DeG8AQxT5OD/?mdxt=MTFoeXZscWxkbGRkbw==' },
-    { label: 'Facebook Reel', url: 'https://www.facebook.com/share/r/1MisQHQbyR/' },
-    { label: 'Spotify Album', url: 'https://open.spotify.com/album/1HaAdGP06ZqMnoxDVhDtBP?si=VWe5GZG1QwipKvGN-2kicw&utm_source=copy-link&nd=1&dlsi=da11d5a5e8fe4fb9' },
-    { label: 'Pinterest HD', url: 'https://pin.it/6v43jV68U' },
-    { label: 'YouTube 4K', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
-  ];
-
-  const primaryPlatforms = ['tiktok', 'youtube', 'instagram', 'facebook', 'spotify', 'twitter'];
-  const remainingCount = SUPPORTED_PLATFORMS.length - primaryPlatforms.length; // 17 - 6 = 11
-
   return (
     <section id="download" className="relative pt-12 pb-14 px-4 sm:px-6">
       <div className="max-w-3xl mx-auto text-center">
-        {/* Badge: ☁ Downloader */}
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-500/20 mb-6">
           <CloudDownload className="w-3.5 h-3.5 text-emerald-400" />
           <span>{t.hero.badge}</span>
         </div>
 
-        {/* Simplified Headline: Download Videos&Music */}
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight leading-[1.15] mb-4 text-balance">
           {t.hero.headline}
         </h1>
 
-        {/* Subtitle */}
         <p className="text-sm sm:text-base text-slate-400 max-w-2xl mx-auto mb-7 leading-relaxed">
           {t.hero.subtitle}
         </p>
 
-        {/* Mini Badges Row: TikTok, YouTube, IG, FB, Spotify, X, +11 */}
         <div className="flex items-center justify-center gap-2 mb-8 flex-wrap">
-          {primaryPlatforms.map((pid) => {
-            const p = SUPPORTED_PLATFORMS.find((item) => item.id === pid);
-            if (!p) return null;
-            return (
-              <button
-                key={pid}
-                onClick={() => onSelectSample(p.sampleUrl)}
-                title={`Download from ${p.name}`}
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-white transition-all transform hover:scale-110 active:scale-95 shadow-sm border border-slate-700/60 cursor-pointer"
-                style={{ backgroundColor: p.iconColor === '#000000' ? '#141c24' : p.iconColor }}
-              >
-                <RenderPlatformIcon platformId={p.id} className="w-5 h-5 text-white" />
-              </button>
-            );
-          })}
-          <button
-            onClick={onScrollToPlatforms}
-            className="w-10 h-10 rounded-xl flex items-center justify-center bg-slate-800/90 text-slate-300 hover:text-white border border-slate-700 hover:border-emerald-500/50 text-xs font-bold transition-all hover:scale-105 cursor-pointer"
-            title={`View all ${SUPPORTED_PLATFORMS.length} platforms`}
-          >
-            +{remainingCount}
-          </button>
+          {SUPPORTED_PLATFORMS.map((platform) => (
+            <button
+              key={platform.id}
+              type="button"
+              onClick={onScrollToPlatforms}
+              title={`${platform.name}: ${platform.supportedFormats.join(', ')}`}
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-white transition-all transform hover:scale-110 active:scale-95 shadow-sm border border-slate-700/60 cursor-pointer"
+              style={{ backgroundColor: platform.iconColor === '#000000' ? '#141c24' : platform.iconColor }}
+            >
+              <RenderPlatformIcon platformId={platform.id} className="w-5 h-5 text-white" />
+            </button>
+          ))}
         </div>
 
-        {/* Main Input Form with green download button */}
         <form onSubmit={onSubmit} className="relative max-w-2xl mx-auto">
           <div className="flex items-center rounded-xl bg-[#14212d] border border-slate-700/90 shadow-2xl focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all overflow-hidden p-1">
             <div className="pl-3.5 pr-2 text-slate-400 shrink-0">
@@ -118,17 +85,16 @@ export const HeroDownloader: React.FC<HeroDownloaderProps> = ({
             <input
               type="text"
               value={urlInput}
-              onChange={(e) => onUrlChange(e.target.value)}
+              onChange={(event) => onUrlChange(event.target.value)}
               placeholder={t.hero.placeholder}
               className="w-full bg-transparent text-white placeholder-slate-400 text-sm sm:text-base px-2 py-3.5 focus:outline-none"
             />
 
-            {/* Quick Helper Actions: Clear & Paste buttons */}
             <div className="flex items-center gap-1.5 pr-1.5 shrink-0">
               {urlInput && (
                 <button
                   type="button"
-                  onClick={handleClear}
+                  onClick={() => onUrlChange('')}
                   className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700/50 transition-colors cursor-pointer"
                   title="Clear"
                 >
@@ -146,7 +112,6 @@ export const HeroDownloader: React.FC<HeroDownloaderProps> = ({
                 <span>{t.hero.pasteBtn}</span>
               </button>
 
-              {/* The emerald green button */}
               <button
                 type="submit"
                 disabled={isLoading}
@@ -173,24 +138,17 @@ export const HeroDownloader: React.FC<HeroDownloaderProps> = ({
         {detectedPlatformName && urlInput && (
           <div className="mt-2.5 inline-flex items-center gap-1.5 text-xs text-emerald-400 font-medium bg-emerald-950/40 px-3 py-1 rounded-full border border-emerald-500/20 animate-in fade-in">
             <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>{t.hero.detectedPlatform}: <strong>{detectedPlatformName}</strong></span>
+            <span>
+              {t.hero.detectedPlatform}: <strong>{detectedPlatformName}</strong>
+            </span>
           </div>
         )}
 
-        {/* Quick test sample pills */}
-        <div className="mt-4 flex items-center justify-center gap-1.5 flex-wrap text-xs text-slate-400">
-          <span className="text-slate-500 font-medium">{t.hero.sampleLinksLabel}</span>
-          {sampleLinks.map((sample, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => onSelectSample(sample.url)}
-              className="px-2.5 py-1 rounded-md bg-slate-800/60 hover:bg-slate-700/70 border border-slate-700/50 text-slate-300 hover:text-white transition-colors cursor-pointer"
-            >
-              {sample.label}
-            </button>
-          ))}
-        </div>
+        <p className="mt-4 text-[11px] text-slate-500 leading-relaxed">
+          {language === 'en'
+            ? 'No sample links or dummy files. Results only come from the URL you paste and files that actually exist at the source.'
+            : 'Tidak ada tautan contoh atau file dummy. Hasil hanya muncul dari URL yang Anda tempel dan file yang benar-benar tersedia di sumbernya.'}
+        </p>
       </div>
     </section>
   );

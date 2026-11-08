@@ -1,177 +1,78 @@
 # ⚡ Downloader Zone
 
-> **Download Videos&Music**  
-> All-in-one multi-platform downloader for watermark-free videos, photos, music, and reels from 17 popular platforms at ultra-high speeds — free forever, without ads.
+Downloader yang mengambil file langsung dari tautan publik yang Anda tempel. Tidak ada URL contoh, metadata dummy, atau kualitas palsu: setiap opsi unduhan harus berasal dari file yang benar-benar ditemukan pada tautan tersebut.
 
-[![React](https://img.shields.io/badge/Frontend-React_19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/Language-TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Styling-Tailwind_CSS_v4-38B2AC?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-[![Express](https://img.shields.io/badge/Backend-Express.js-000000?logo=express&logoColor=white)](https://expressjs.com/)
-[![Docker](https://img.shields.io/badge/Deploy-Docker-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
-[![Google Cloud Run](https://img.shields.io/badge/Cloud-Google_Cloud_Run-4285F4?logo=googlecloud&logoColor=white)](https://cloud.google.com/run)
+## Platform yang benar-benar didukung
 
----
+| Platform | Hasil nyata |
+| --- | --- |
+| TikTok | Video MP4 tanpa watermark + audio MP3 (ffmpeg) |
+| Instagram | Reels/video MP4, foto JPG, audio MP3 (ffmpeg) |
+| Facebook | Video/Reels MP4 publik + audio MP3 (ffmpeg) |
+| X / Twitter | Video MP4 dan foto dari post aktif + audio MP3 (ffmpeg) |
+| Pinterest | Foto JPG resolusi asli |
+| YouTube | Video MP4 144p–1080p dengan audio asli digabung ffmpeg + MP3 (ffmpeg) |
+| Twitch Clips | Klip MP4 360p–1080p + MP3 (ffmpeg) |
 
-## ✨ Key Features
+Tautan Spotify dan Apple Music mengembalikan cover art asli beserta penjelasan bahwa audionya ber-DRM dan tidak dapat diunduh. SoundCloud dan Vimeo memerlukan akses HLS/DASH, sehingga aplikasi menampilkan pesan error yang jelas alih-alih menawarkan tombol unduhan palsu. Playlist YouTube, siaran langsung, VOD Twitch, dan klip privat juga tidak didukung.
 
-- 🎵 **TikTok**: Download watermark-free HD videos (1080p), original audio MP3s, and photo slide carousels via TikWM.
-- 📸 **Instagram**: Reels, Post Photos & Videos, Carousel albums, and IGTV with direct stream decoding.
-- 🔴 **YouTube**: Shorts and regular videos with multi-resolution choices (up to 4K Ultra HD) and 320kbps MP3 audio conversion.
-- 📘 **Facebook**: Public videos and FB Reels with dual stream options (HD & SD).
-- 🐦 **Twitter / X**: Crystal-clear MP4 videos and animated GIFs.
-- 📌 **Pinterest**: High-definition original image extraction via Pinterest Pidgets API.
-- 🎶 **Spotify & SoundCloud**: Instant track metadata, cover art, and stream previews.
-- 🌐 **Multi-Language Support**: Seamless bilingual support (**English by default**, with one-click toggle to Bahasa Indonesia).
-- 📡 **Real-Time Live Network Status**: Live active user indicators, today's processed download counter, ~1.2s response latency, and a real-time download activity stream.
-- 🛡️ **Built-in Proxy Downloader**: Server-side streaming endpoint (`/api/proxy-download`) that bypasses client-side CORS limitations, prevents CDN hotlink blocks, and attaches clean `Content-Disposition` attachment headers for instant device saving.
-- ⚡ **Smart Multi-Resolver Fallback Engine**: Multi-tiered API resolver that gracefully falls back to secondary scrapers whenever primary endpoints face rate limits.
-- 📱 **Modern Neon-Dark Glassmorphism**: Tailored for mobile, tablet, and desktop devices with interactive video/audio players, QR code mobile scanning, and one-click clipboard paste.
+## Cara kerja
 
----
+1. `POST /api/parse` menerima URL runtime dari pengguna, memvalidasinya, lalu menjalankan resolver sesuai platform.
+2. Resolver mengembalikan URL media asli (CDN) beserta ukuran file bila tersedia. Tidak ada fallback ke URL statis.
+3. `/api/proxy-download` melakukan streaming file dengan header unduhan dan validasi anti-SSRF.
+4. `/api/convert` menjalankan `ffmpeg` pada stream media asli untuk menghasilkan MP3 192 kbps. File MP3 diverifikasi berasal dari video yang diunduh, bukan stream dummy.
+5. YouTube memakai stream video dan audio terpisah dari `@distube/ytdl-core`; `/api/youtube/video` menggabungkannya dengan ffmpeg, sedangkan `/api/youtube/audio` mengonversi audio ke MP3.
+6. Frontend memeriksa endpoint dengan `HEAD` sebelum memulai unduhan, lalu menampilkan error sumber jika gagal.
 
-## 🛠️ Tech Stack
-
-- **Frontend**: React 19, TypeScript, Tailwind CSS v4, Lucide React icons
-- **Backend**: Express.js (Node.js runtime), Axios, Streaming Pipes
-- **Build System**: Vite 6, tsx
-- **Containerization**: Docker (Multi-stage build)
-- **Cloud Infrastructure**: Google Cloud Run (Serverless container deployment)
-
----
-
-## 🚀 Local Development Setup
-
-### Prerequisites
-- [Node.js](https://nodejs.org/) version 18 or 20+
-- `npm` or `yarn`
-
-### 1. Clone Repository
-```bash
-git clone https://github.com/6ickzone/dl-zone.git
-cd dl-zone
-```
-
-### 2. Install Dependencies
-```bash
-npm install
-```
-
-### 3. Start Development Server
-```bash
-npm run dev
-```
-The app will be accessible at `http://localhost:3000`.
-
-### 4. Build for Production
-```bash
-npm run build
-npm start
-```
-
----
-
-## 🐳 Running with Docker
-
-This project comes with an optimized, lightweight production multi-stage `Dockerfile`:
+## Menjalankan secara lokal
 
 ```bash
-# Build Docker image
-docker build -t downloaderz .
-
-# Run container on port 8080
-docker run -p 8080:8080 downloaderz
+bun install
+bun run dev
 ```
-Open your browser and visit `http://localhost:8080`.
 
----
+Aplikasi berjalan di `http://localhost:3000`. Server Express dan Vite memakai port yang sama.
 
-## ☁️ Deploy to Google Cloud Run
-
-Deploy directly to **Google Cloud Run** using the Google Cloud SDK (`gcloud`):
+## Build produksi (butuh runtime Node/Bun)
 
 ```bash
-# Set your active Google Cloud project
-gcloud config set project <YOUR_PROJECT_ID>
-
-# Deploy directly from the project directory to asia-southeast1 (Singapore)
-gcloud run deploy downloaderz \
-  --source . \
-  --region=asia-southeast1 \
-  --allow-unauthenticated \
-  --port=8080
+bun run build   # menghasilkan dist/
+NODE_ENV=production bun start
 ```
 
-Cloud Build automatically builds the container image and generates an HTTPS Cloud Run endpoint ready for production traffic.
+Server produksi menyajikan `dist/` dan seluruh endpoint `/api/*` dari proses Express yang sama.
 
----
+## Deploy
 
-## 📂 Project Structure
+**Penting:** hosting statis (termasuk Freebuff Deploy untuk proyek Vite) hanya mengunggah `dist/`. Express, proxy, dan ffmpeg tidak ikut berjalan, sehingga `/api/*` akan 404. Aplikasi akan menampilkan pesan bahwa API pemroses tidak tersedia.
+
+Gunakan host yang menjalankan container atau proses Node/Bun:
+
+```bash
+docker build -t downloader-zone .
+docker run -p 8080:8080 downloader-zone
+```
+
+Atau deploy ke Cloud Run / Render / Railway dengan start command `bun start` dan port dari `PORT`. Dockerfile sudah memakai `bun.lock` dan menyertakan `ffmpeg-static`. Runtime harus Node 22.22+ (atau Bun yang kompatibel) karena `@distube/ytdl-core` membutuhkan Node modern.
+
+## Struktur
 
 ```text
-├── src/
-│   ├── components/      # UI Components (Navbar, HeroDownloader, MediaResultCard, Faq, Stats, Footer, etc.)
-│   ├── context/         # React Contexts (LanguageContext for EN/ID i18n)
-│   ├── data/            # Static data configurations (platforms, faq)
-│   ├── types/           # TypeScript interface definitions
-│   ├── utils/           # Media metadata resolver and download triggers
-│   ├── App.tsx          # Main React Application
-│   ├── main.tsx         # React DOM entry point
-│   └── index.css        # Tailwind CSS v4 styling rules
-├── server.ts            # Express backend (resolver APIs & CORS-bypass stream proxy)
-├── Dockerfile           # Production multi-stage Docker container build
-├── .dockerignore        # Build ignore definitions
-├── package.json         # Dependencies and lifecycle scripts
-├── vite.config.ts       # Vite configuration
-└── README.md            # Project documentation
+src/
+  components/     UI (hero, hasil media, platform, FAQ, riwayat)
+  context/        i18n EN/ID
+  data/           daftar platform yang berfungsi
+  utils/          pemanggilan API dan unduhan
+server.ts         resolver, proxy streaming, konversi ffmpeg
+Dockerfile        image produksi
 ```
 
----
+## Batasan
 
-## 📤 Pushing to GitHub
-
-If you are setting up a fresh repository on GitHub:
-
-```bash
-# 1. Initialize git (if not already done)
-git init
-
-# 2. Stage all files
-git add .
-
-# 3. Create initial commit
-git commit -m "feat: complete Downloader Zone multi-platform app with live stats & EN/ID i18n"
-
-# 4. Switch branch to main
-git branch -M main
-
-# 5. Link your GitHub remote repository
-git remote add origin https://github.com/YOUR_USERNAME/downloaderz.git
-
-# 6. Push to GitHub
-git push -u origin main
-```
-
----
-
-## 🙏 Credits & Acknowledgments
-
-The **Downloader Zone** project is powered by a combination of custom engineering, trusted open-source tools, and public community API services. We extend our gratitude and appreciation to:
-
-### 🌐 Media Resolvers & Public APIs
-- **[TikWM](https://tikwm.com/)** – Public API for watermark-free TikTok video and audio extraction.
-- **[SnapSave Community](https://github.com/topics/snapsave)** & **`snapsave-media-downloader`** – Resolver algorithms for decoding Instagram Reels and Facebook HD video streams.
-- **[Pinterest Pidgets API](https://widgets.pinterest.com/)** – Public endpoint for retrieving original high-resolution Pinterest photos and metadata.
-- **[YouTube oEmbed & iFrame API](https://developers.google.com/youtube)** – Official oEmbed endpoints for YouTube title, duration, and thumbnail rendering.
-- **[Spotify oEmbed](https://developer.spotify.com/documentation/embeds)** & **[SoundCloud oEmbed](https://developers.soundcloud.com/docs/api/reference#oembed)** – High-fidelity music and album embed metadata services.
-
-### 💻 Open Source Frameworks & Tools
-- **[React 19](https://react.dev/)** & **[Vite](https://vitejs.dev/)** – Fast frontend framework and instantaneous dev server.
-- **[Tailwind CSS v4](https://tailwindcss.com/)** – Utility-first CSS framework providing responsive neon-dark glassmorphism styling.
-- **[Lucide Icons](https://lucide.dev/)** – Clean, modern icon suite.
-- **[Express.js](https://expressjs.com/)** – Node.js web server powering the proxy stream pipeline and bypassing CORS.
-
----
-
-## 📄 License & Disclaimer
-
-This project is created for educational, research, and personal media archiving purposes. Please respect the copyright and Terms of Service of each social media platform. All trademarks, logos, and third-party media content belong to their respective copyright holders.
+- Hanya konten publik. Post privat, story kedaluwarsa, dan tautan CDN kedaluwarsa akan menghasilkan error.
+- YouTube dibatasi hingga 1080p dan satu video; playlist, live, dan video age-restricted tidak didukung. Twitch hanya mendukung klip, bukan VOD/live.
+- Ekstraksi YouTube bergantung pada perubahan sisi YouTube. Jika `ytdl-core` berhenti bekerja, resolver akan menampilkan error sumber dan perlu pembaruan dependency.
+- Tidak ada bypass DRM.
+- Tautan media dari platform dapat kedaluwarsa; proses ulang tautan asli untuk mendapatkan URL baru.
+- Gunakan hanya untuk arsip pribadi dan hormati hak cipta serta Terms of Service masing-masing platform.

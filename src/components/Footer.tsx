@@ -30,9 +30,6 @@ export const Footer: React.FC = () => {
             <a href="#faq" className="hover:text-emerald-400 transition-colors">
               {t.footer.faq}
             </a>
-            <a href="#statistik" className="hover:text-emerald-400 transition-colors">
-              {t.footer.liveStatus}
-            </a>
             <span className="text-slate-600">|</span>
             <span className="text-slate-400 text-xs flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />

@@ -54,12 +54,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             {t.nav.faq}
           </a>
-          <a
-            href="#statistik"
-            className="hover:text-emerald-400 transition-colors whitespace-nowrap"
-          >
-            {t.nav.liveStatus}
-          </a>
         </nav>
 
         {/* Zone 3: Actions - Language switcher & History */}

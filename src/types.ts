@@ -1,11 +1,11 @@
 export type PlatformId =
   | 'tiktok'
-  | 'youtube'
   | 'instagram'
   | 'facebook'
-  | 'twitter'
-  | 'threads'
   | 'pinterest'
+  | 'twitter'
+  | 'youtube'
+  | 'threads'
   | 'spotify'
   | 'soundcloud'
   | 'applemusic'
@@ -15,13 +15,14 @@ export type PlatformId =
   | 'bilibili'
   | 'vimeo'
   | 'twitch'
-  | 'snackvideo';
+  | 'snackvideo'
+  | 'other';
 
 export interface PlatformInfo {
   id: PlatformId;
   name: string;
   badge: string;
-  category: 'video' | 'audio' | 'short';
+  category: 'video' | 'audio' | 'short' | 'image';
   iconColor: string;
   textColor: string;
   bgColor: string;
@@ -29,7 +30,6 @@ export interface PlatformInfo {
   description: string;
   supportedFormats: string[];
   urlPattern: RegExp;
-  sampleUrl: string;
   iconName: string;
 }
 
@@ -39,7 +39,7 @@ export interface DownloadQuality {
   resolution?: string;
   bitrate?: string;
   format: 'mp4' | 'mp3' | 'zip' | 'jpg' | 'png';
-  fileSize: string;
+  fileSize?: string;
   badge?: string;
   isPopular?: boolean;
   downloadUrl?: string;
@@ -52,9 +52,8 @@ export interface MediaMetadata {
   platformName: string;
   title: string;
   author: string;
-  authorAvatar?: string;
   duration?: string;
-  thumbnail: string;
+  thumbnail?: string;
   likes?: string;
   views?: string;
   date?: string;
@@ -65,31 +64,16 @@ export interface MediaMetadata {
   directAudioUrl?: string;
   embedUrl?: string;
   mediaType?: 'video' | 'audio' | 'image';
-}
-
-export interface SearchSongItem {
-  id: string;
-  title: string;
-  artist: string;
-  album: string;
-  duration: string;
-  cover: string;
-  platform: 'spotify' | 'youtube' | 'soundcloud';
-  sampleAudioUrl: string;
-  qualities: DownloadQuality[];
+  notice?: string;
 }
 
 export interface DownloadHistoryItem {
   id: string;
   title: string;
   platform: string;
-  format: string;
+  format: DownloadQuality['format'];
   quality: string;
   timestamp: number;
   fileSize: string;
-}
-
-export interface FaqItem {
-  question: string;
-  answer: string;
+  downloadUrl?: string;
 }

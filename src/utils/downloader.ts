@@ -11,136 +11,151 @@ export function detectPlatformFromUrl(url: string): PlatformInfo | null {
   return null;
 }
 
+function isRealDownload(quality: DownloadQuality): boolean {
+  return typeof quality.downloadUrl === 'string' && quality.downloadUrl.startsWith('/api/');
+}
+
 /**
- * Real API-backed metadata extractor.
- * Calls backend /api/parse to get genuine video title, author, cover, and stream links.
+ * Resolves metadata and real file URLs from the user's link through the
+ * backend. There is intentionally no client-side fallback: if the server
+ * cannot read the link, the UI shows the error instead of inventing data.
  */
 export async function fetchLinkMetadata(rawUrl: string): Promise<MediaMetadata> {
   const url = rawUrl.trim();
-  const detected = detectPlatformFromUrl(url);
-  const platformId: PlatformId = detected ? detected.id : 'youtube';
-  const platformInfo = detected || SUPPORTED_PLATFORMS.find((p) => p.id === 'youtube')!;
+  if (!/^https?:\/\//i.test(url)) {
+    throw new Error('Tautan tidak valid. Tempel URL lengkap yang diawali http:// atau https://.');
+  }
 
-  // 1. Try our backend parser endpoint first
+  const detected = detectPlatformFromUrl(url);
+  let response: Response;
   try {
-    const res = await fetch('/api/parse', {
+    response = await fetch('/api/parse', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url }),
     });
-
-    const data = await res.json().catch(() => null);
-
-    if (res.ok && data && data.success) {
-      return {
-        id: `media-${Date.now()}`,
-        url,
-        platform: (data.platform as PlatformId) || platformId,
-        platformName: data.platformName || platformInfo.name,
-        title: data.title,
-        author: data.author || `@${platformInfo.name.toLowerCase()}_creator`,
-        duration: data.duration || 'HD',
-        thumbnail: data.thumbnail,
-        likes: data.likes,
-        views: data.views,
-        date: data.date || 'Terbaru',
-        qualities: data.qualities || [],
-        audioQualities: data.audioQualities || [],
-        directVideoUrl: data.directVideoUrl,
-        directAudioUrl: data.directAudioUrl,
-        embedUrl: data.embedUrl,
-        mediaType: (data.mediaType as 'video' | 'audio' | 'image') || (data.platform === 'spotify' || data.platform === 'soundcloud' || data.platform === 'applemusic' ? 'audio' : (data.qualities && data.qualities[0]?.format === 'jpg' && !data.directVideoUrl ? 'image' : 'video')),
-      };
-    } else if (data && !data.success && data.error) {
-      throw new Error(data.error);
-    }
-  } catch (err: any) {
-    if (err && err.message && !err.message.includes('fetch')) {
-      throw err;
-    }
-    console.warn('Backend parse error, trying client extraction:', err);
+  } catch {
+    throw new Error('Tidak dapat menghubungi server pemroses. Periksa koneksi lalu coba lagi.');
   }
 
-  // 2. Client-side extraction for YouTube (using noembed / oEmbed directly)
-  if (/youtube\.com|youtu\.be/i.test(url)) {
-    let videoId = '';
-    const vMatch = url.match(/[?&]v=([^&#]+)/);
-    const shortMatch = url.match(/shorts\/([^/?&#]+)/);
-    const youtuMatch = url.match(/youtu\.be\/([^/?&#]+)/);
-    if (vMatch) videoId = vMatch[1];
-    else if (shortMatch) videoId = shortMatch[1];
-    else if (youtuMatch) videoId = youtuMatch[1];
-
-    try {
-      const ytOembed = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(url)}`);
-      if (ytOembed.ok) {
-        const ytData = await ytOembed.json();
-        return {
-          id: `media-${Date.now()}`,
-          url,
-          platform: 'youtube',
-          platformName: 'YouTube HD',
-          title: ytData.title || `YouTube Video (${videoId})`,
-          author: ytData.author_name || 'YouTube Creator',
-          duration: 'HD',
-          thumbnail: ytData.thumbnail_url || (videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=600&auto=format&fit=crop&q=80'),
-          date: 'Tersedia',
-          qualities: [
-            { id: 'yt-1080', label: 'Video 1080p Full HD', resolution: '1080p 60fps', format: 'mp4', fileSize: '48.5 MB', isPopular: true, badge: 'Full HD' },
-            { id: 'yt-720', label: 'Video 720p HD Standar', resolution: '720p HD', format: 'mp4', fileSize: '24.1 MB' },
-            { id: 'yt-480', label: 'Video 480p (Hemat Data)', resolution: '480p SD', format: 'mp4', fileSize: '12.8 MB' },
-          ],
-          audioQualities: [
-            { id: 'yt-mp3-320', label: 'Audio MP3 Studio Quality', bitrate: '320 kbps', format: 'mp3', fileSize: '8.4 MB', isPopular: true, badge: 'MP3 320k' },
-            { id: 'yt-mp3-192', label: 'Audio MP3 Standar', bitrate: '192 kbps', format: 'mp3', fileSize: '4.8 MB' },
-          ],
-          embedUrl: videoId ? `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0` : undefined,
-          mediaType: 'video',
-        };
-      }
-    } catch {
-      // ignore
-    }
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    throw new Error(
+      'API pemroses tidak tersedia di alamat ini. Aplikasi memerlukan server Node (bukan hosting statis) agar dapat mengambil file dari tautan.'
+    );
   }
 
-  // 3. Client-side extraction for Spotify
-  if (/spotify\.com/i.test(url)) {
-    try {
-      const spOembed = await fetch(`https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`);
-      if (spOembed.ok) {
-        const spData = await spOembed.json();
-        const spTrack = url.match(/track\/([a-zA-Z0-9]+)/);
-        return {
-          id: `media-${Date.now()}`,
-          url,
-          platform: 'spotify',
-          platformName: 'Spotify',
-          title: spData.title || 'Spotify Track',
-          author: 'Spotify Artist',
-          duration: '3:30',
-          thumbnail: spData.thumbnail_url || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80',
-          date: 'Original Track',
-          qualities: [],
-          audioQualities: [
-            { id: 'sp-320', label: 'MP3 320kbps HiFi (Lengkap Tag & Cover)', bitrate: '320 kbps', format: 'mp3', fileSize: '8.5 MB', isPopular: true, badge: '320 kbps HiFi' },
-            { id: 'sp-192', label: 'MP3 192kbps', bitrate: '192 kbps', format: 'mp3', fileSize: '5.1 MB' },
-          ],
-          embedUrl: spTrack ? `https://open.spotify.com/embed/track/${spTrack[1]}?utm_source=generator&theme=0` : undefined,
-          mediaType: 'audio',
-        };
-      }
-    } catch {
-      // ignore
-    }
+  const data: any = await response.json().catch(() => null);
+  if (!data) {
+    throw new Error('Server mengembalikan respons yang tidak bisa dibaca.');
+  }
+  if (!response.ok || !data.success) {
+    throw new Error(data.error || 'Gagal memproses tautan ini.');
   }
 
-  // 4. If all real extraction methods fail, throw clear error instead of hardcoded placeholder
-  throw new Error('Gagal mengambil metadata media dari tautan ini. Pastikan konten bersifat publik.');
+  const qualities: DownloadQuality[] = Array.isArray(data.qualities)
+    ? data.qualities.filter(isRealDownload)
+    : [];
+  const audioQualities: DownloadQuality[] = Array.isArray(data.audioQualities)
+    ? data.audioQualities.filter(isRealDownload)
+    : [];
+
+  if (qualities.length === 0 && audioQualities.length === 0 && !data.notice) {
+    throw new Error('Tautan ini tidak menghasilkan file yang bisa diunduh.');
+  }
+
+  return {
+    id: `media-${Date.now()}`,
+    url,
+    platform: (data.platform as PlatformId) || detected?.id || 'other',
+    platformName: data.platformName || detected?.name || 'Media',
+    title: data.title || 'Media',
+    author: data.author || '',
+    duration: data.duration,
+    thumbnail: data.thumbnail,
+    likes: data.likes,
+    views: data.views,
+    date: data.date,
+    qualities,
+    audioQualities,
+    directVideoUrl: data.directVideoUrl,
+    directAudioUrl: data.directAudioUrl,
+    embedUrl: data.embedUrl,
+    mediaType: data.mediaType || 'video',
+    notice: data.notice,
+  };
+}
+
+const INTERNAL_DOWNLOAD_ENDPOINTS = [
+  '/api/proxy-download',
+  '/api/convert',
+  '/api/youtube/video',
+  '/api/youtube/audio',
+];
+
+/**
+ * Wraps an external media URL in the download proxy. Internal endpoints
+ * (including the ffmpeg converter) are kept exactly as the server built them.
+ */
+function buildDownloadEndpoint(downloadUrl: string, fileName: string): string {
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
+
+  let parsed: URL;
+  try {
+    parsed = new URL(downloadUrl, origin);
+  } catch {
+    throw new Error('Tautan unduhan tidak valid.');
+  }
+
+  if (parsed.origin === origin && INTERNAL_DOWNLOAD_ENDPOINTS.includes(parsed.pathname)) {
+    return parsed.toString();
+  }
+
+  let upstreamUrl = downloadUrl;
+  if (parsed.origin === origin && parsed.pathname.startsWith('/api/')) {
+    const innerUrl = parsed.searchParams.get('url');
+    if (!innerUrl) throw new Error('Tautan media tidak valid.');
+    upstreamUrl = innerUrl;
+  }
+
+  const normalized = new URL(upstreamUrl, origin);
+  if (normalized.protocol !== 'http:' && normalized.protocol !== 'https:') {
+    throw new Error('Sumber ini tidak menyediakan tautan unduhan langsung.');
+  }
+
+  const params = new URLSearchParams({ url: normalized.toString(), filename: fileName });
+  return `/api/proxy-download?${params.toString()}`;
 }
 
 /**
- * Triggers genuine download - either from real direct URL via backend proxy or generated media blob
+ * Verifies the server can produce a real media file before the browser
+ * navigates to the download URL.
  */
+async function assertDownloadReady(endpoint: string): Promise<void> {
+  let response: Response;
+  try {
+    response = await fetch(endpoint, { method: 'HEAD', cache: 'no-store' });
+  } catch {
+    throw new Error('Tidak dapat menghubungi server unduhan. Periksa koneksi lalu coba lagi.');
+  }
+
+  if (!response.ok) {
+    let message = '';
+    try {
+      const data = await response.json();
+      if (data && typeof data.error === 'string') message = data.error;
+    } catch {
+      message = (await response.text().catch(() => '')).slice(0, 240);
+    }
+    throw new Error(message || `Sumber menolak unduhan (HTTP ${response.status}).`);
+  }
+
+  const contentType = (response.headers.get('content-type') || '').toLowerCase().split(';')[0];
+  if (!contentType.startsWith('video/') && !contentType.startsWith('audio/') && !contentType.startsWith('image/')) {
+    throw new Error('Sumber tidak mengembalikan file media. Proses ulang tautan lalu coba lagi.');
+  }
+}
+
 export async function triggerFileDownload(
   title: string,
   platform: string,
@@ -151,158 +166,20 @@ export async function triggerFileDownload(
   const sanitizedTitle = title.replace(/[^a-zA-Z0-9_\- ]/g, '').trim().substring(0, 40) || 'media';
   const fileName = `DownloaderZone_${platform}_${sanitizedTitle}.${format}`;
 
-  // If a real direct download URL exists (e.g. from Instagram, Facebook, TikTok, Twitter, Pinterest)
-  if (downloadUrl && (downloadUrl.startsWith('http') || downloadUrl.startsWith('/api/'))) {
-    try {
-      const targetUrl = downloadUrl.startsWith('/api/proxy-download')
-        ? downloadUrl
-        : `/api/proxy-download?url=${encodeURIComponent(downloadUrl)}&filename=${encodeURIComponent(fileName)}`;
-
-      const link = document.createElement('a');
-      link.href = targetUrl;
-      link.setAttribute('download', fileName);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      return;
-    } catch (err) {
-      console.warn('Proxy download failed, falling back to direct blob', err);
-    }
+  if (!downloadUrl) {
+    throw new Error(
+      `Tautan unduhan ${qualityLabel} tidak tersedia dari sumber ini. Proses ulang tautan atau pilih kualitas lain.`
+    );
   }
 
-  // Fallback: Generate real playable audio/video or image blob
-  if (format === 'jpg' || format === 'png') {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1080;
-    canvas.height = 1080;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.fillStyle = '#0b1219';
-      ctx.fillRect(0, 0, 1080, 1080);
-      ctx.fillStyle = '#10b981';
-      ctx.font = 'bold 36px sans-serif';
-      ctx.fillText(title, 60, 200);
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = '22px sans-serif';
-      ctx.fillText(`Downloader Zone - ${platform.toUpperCase()}`, 60, 260);
-      canvas.toBlob((blob) => {
-        if (blob) saveBlobAs(blob, fileName);
-      }, 'image/jpeg');
-    }
-    return;
-  } else if (format === 'mp3') {
-    const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-    const sampleRate = 44100;
-    const duration = 2.0;
-    const numberOfChannels = 2;
-    const frameCount = sampleRate * duration;
-    const audioBuffer = audioContext.createBuffer(numberOfChannels, frameCount, sampleRate);
+  const endpoint = buildDownloadEndpoint(downloadUrl, fileName);
+  await assertDownloadReady(endpoint);
 
-    for (let channel = 0; channel < numberOfChannels; channel++) {
-      const channelData = audioBuffer.getChannelData(channel);
-      for (let i = 0; i < frameCount; i++) {
-        const t = i / sampleRate;
-        const note1 = Math.sin(2 * Math.PI * 261.63 * t);
-        const note2 = Math.sin(2 * Math.PI * 329.63 * t);
-        const note3 = Math.sin(2 * Math.PI * 392.00 * t);
-        const envelope = Math.exp(-t * 1.5);
-        channelData[i] = ((note1 + note2 + note3) / 3) * envelope * 0.5;
-      }
-    }
-
-    const wavBlob = audioBufferToWavBlob(audioBuffer);
-    saveBlobAs(wavBlob, fileName);
-  } else if (format === 'mp4') {
-    const sampleText = `Downloader Zone - Downloaded Content
-Title: ${title}
-Source Platform: ${platform}
-Quality: ${qualityLabel}
-Generated: ${new Date().toISOString()}
-Service: https://downloaderzone.io`;
-    const blob = new Blob([sampleText], { type: 'video/mp4' });
-    saveBlobAs(blob, fileName);
-  } else {
-    const textBlob = new Blob([`Downloader Zone - ${title} (${qualityLabel})`], { type: 'application/octet-stream' });
-    saveBlobAs(textBlob, fileName);
-  }
-}
-
-function saveBlobAs(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
-function audioBufferToWavBlob(buffer: AudioBuffer): Blob {
-  const numOfChan = buffer.numberOfChannels;
-  const length = buffer.length * numOfChan * 2 + 44;
-  const out = new DataView(new ArrayBuffer(length));
-  let pos = 0;
-
-  function writeString(str: string) {
-    for (let i = 0; i < str.length; i++) {
-      out.setUint8(pos++, str.charCodeAt(i));
-    }
-  }
-
-  function setUint16(data: number) {
-    out.setUint16(pos, data, true);
-    pos += 2;
-  }
-
-  function setUint32(data: number) {
-    out.setUint32(pos, data, true);
-    pos += 4;
-  }
-
-  writeString('RIFF');
-  setUint32(length - 8);
-  writeString('WAVE');
-
-  writeString('fmt ');
-  setUint32(16);
-  setUint16(1);
-  setUint16(numOfChan);
-  setUint32(buffer.sampleRate);
-  setUint32(buffer.sampleRate * 2 * numOfChan);
-  setUint16(numOfChan * 2);
-  setUint16(16);
-
-  writeString('data');
-  setUint32(length - pos - 4);
-
-  for (let i = 0; i < buffer.length; i++) {
-    for (let channel = 0; channel < numOfChan; channel++) {
-      let sample = buffer.getChannelData(channel)[i];
-      sample = Math.max(-1, Math.min(1, sample));
-      out.setInt16(pos, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
-      pos += 2;
-    }
-  }
-
-  return new Blob([out.buffer], { type: 'audio/wav' });
-}
-
-export function playToneSnippet(): void {
-  try {
-    const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(440, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.3);
-    gain.gain.setValueAtTime(0.2, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.5);
-  } catch {
-    // Ignore audio context errors
-  }
+  const link = document.createElement('a');
+  link.href = endpoint;
+  link.setAttribute('download', fileName);
+  link.rel = 'noopener';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
